@@ -51,7 +51,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "esri/arcgis/util
 					//Optionally define additional map config here for example you can
 					//turn the slider off, display info windows, disable wraparound 180, slider position and more.
 					center : [12.483162, 41.8964],
-					zoom : 11
+					zoom : 13
 				},
 				bingMapsKey : this.config.bingmapskey
 			}).then(lang.hitch(this, function(response) {
