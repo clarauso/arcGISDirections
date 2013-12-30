@@ -1,4 +1,4 @@
-define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "esri/arcgis/utils", "esri/IdentityManager", "esri/urlUtils", "esri/dijit/Directions", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "dojo/on"], function(ready, declare, lang, arcgisUtils, IdentityManager, on, Directions, Locator, webMercatorUtils) {
+define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/dijit/Directions", "esri/tasks/locator", "esri/geometry/webMercatorUtils"], function(ready, declare, lang, arcgisUtils, IdentityManager, on, Directions, Locator, webMercatorUtils) {
 	return declare("", null, {
 		config : {},
 		constructor : function(config) {
