@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
+		<title>Directions Widget</title>
+		<link rel="stylesheet" href="http://js.arcgis.com/3.7/js/dojo/dijit/themes/claro/claro.css">
+		<link rel="stylesheet" href="http://js.arcgis.com/3.7/js/esri/css/esri.css">
+		<link rel="stylesheet" type="text/css" href="css/main.css">
+		<script type="text/javascript">
+			var package_path = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+			var dojoConfig = {
+				// The locationPath logic below may look confusing but all its doing is
+				// enabling us to load the api from a CDN and load local modules from the correct location.
+				packages : [{
+					name : "application",
+					location : package_path + '/js'
+				}, {
+					name : "config",
+					location : package_path + '/config'
+				}],
+				parseOnLoad : true
+			};
+		</script>
+		<script type="text/javascript" src="//js.arcgis.com/3.7/"></script>
+		<script type="text/javascript">
+			require(["dojo/on", "application/main", "application/template", "esri/urlUtils", "esri/map", "esri/dijit/Directions", "dijit/layout/BorderContainer", "dijit/layout/ContentPane", "dojo/domReady!"], function(on, Main, Template) {
+				//create the template. This will take care of all the logic required for template applications
+				//If you need localization set the supportsLocalization value to true to get the localized strings
+				//from the javascript/nls/resource files.
+				//Note that we've included a placeholder nls folder and a resource file with one error string
+				//to show how to setup the strings file.
+
+				var supportsLocalization = true;
+				//defaults to true
+
+				var myTemplate = new Template(supportsLocalization);
+
+				on(myTemplate, "ready", function(config) {
+					//The config object contains the following properties: helper services, (optionally)
+					//i18n, appid, webmap and any custom values defined by the application.
+					//In this example we have one called theme.
+					Main(config);
+				});
+			});
+		</script>
+	</head>
+	<body class="claro">
+		<div data-dojo-type="dijit.layout.BorderContainer" data-dojo-props="design:'headline', gutters:false" style="width:100%;height:100%;">
+			<div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region:'right'" style="width:250px;">
+				<div id="dir"></div>
+			</div>
+			<div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region:'center'" id="map"></div>
+		</div>
+	</body>
+</html>
