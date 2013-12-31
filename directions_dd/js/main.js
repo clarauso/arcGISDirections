@@ -53,7 +53,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			});
 			this.map.addLayer(stops);
 			symbol = new SimpleMarkerSymbol();
-			symbol.setStyle(SimpleMarkerSymbol.STYLE_DIAMOND).setSize(15);
+			symbol.setStyle(SimpleMarkerSymbol.STYLE_DIAMOND).setSize(30);
 			routeSymbol = new SimpleLineSymbol();
 			routeSymbol.setColor(new Color([0, 0, 255, 0.5]));
 			routeSymbol.setWidth(5);
