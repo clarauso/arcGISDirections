@@ -30,18 +30,20 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			stops = new GraphicsLayer();
 			stops.on("mouse-down", function(evt) {
 				console.log("down");
-				task = setInterval(function() {
-					var routeTask = new RouteTask("http://route.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World");
-					routeTask.on("solve-complete", function(evt) {
-						if (!(toRemove === undefined))
-							map.graphics.remove(toRemove);
-						toRemove = map.graphics.add(evt.result.routeResults[0].route.setSymbol(routeSymbol));
-					});
-					routeTask.on("error", function(evt) {
-						console.log("routeTask error");
-					});
-					routeTask.solve(routeParameters);
-				}, 600);
+				if (task === undefined) {
+					task = setInterval(function() {
+						var routeTask = new RouteTask("http://route.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World");
+						routeTask.on("solve-complete", function(evt) {
+							if (toRemove !== undefined)
+								map.graphics.remove(toRemove);
+							toRemove = map.graphics.add(evt.result.routeResults[0].route.setSymbol(routeSymbol));
+						});
+						routeTask.on("error", function(evt) {
+							console.log("routeTask error");
+						});
+						routeTask.solve(routeParameters);
+					}, 600);
+				}
 			});
 			stops.on("mouse-drag", function(evt) {
 				routeParameters.stops.features.splice(0, 1);
@@ -49,7 +51,10 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 				this.remove(evt.graphic);
 			});
 			stops.on("mouse-up", function(evt) {
-				clearInterval(task);
+				if (task !== undefined) {
+					clearInterval(task);
+					task = undefined;
+				}
 			});
 			this.map.addLayer(stops);
 			symbol = new SimpleMarkerSymbol();
