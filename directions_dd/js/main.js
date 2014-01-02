@@ -11,6 +11,12 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			// Map is ready
 			console.log("mapLoaded");
 			var map = this.map;
+			var clickedStop;
+			symbol = new SimpleMarkerSymbol();
+			symbol.setStyle(SimpleMarkerSymbol.STYLE_DIAMOND).setSize(30);
+			routeSymbol = new SimpleLineSymbol();
+			routeSymbol.setColor(new Color([0, 0, 255, 0.5]));
+			routeSymbol.setWidth(5);
 			var toRemove;
 			var routeTask = new RouteTask("http://route.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World");
 			routeTask.on("solve-complete", function(evt) {
@@ -29,25 +35,18 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			var task;
 			stops = new GraphicsLayer();
 			stops.on("mouse-down", function(evt) {
-				console.log("down");
+				console.log(evt);
+				if(evt.graphic)
 				if (task === undefined) {
 					task = setInterval(function() {
-						var routeTask = new RouteTask("http://route.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World");
-						routeTask.on("solve-complete", function(evt) {
-							if (toRemove !== undefined)
-								map.graphics.remove(toRemove);
-							toRemove = map.graphics.add(evt.result.routeResults[0].route.setSymbol(routeSymbol));
-						});
-						routeTask.on("error", function(evt) {
-							console.log("routeTask error");
-						});
 						routeTask.solve(routeParameters);
 					}, 600);
 				}
 			});
 			stops.on("mouse-drag", function(evt) {
-				routeParameters.stops.features.splice(0, 1);
-				routeParameters.stops.features.splice(0, 0, this.add(new Graphic(evt.mapPoint, symbol)));
+				index = routeParameters.stops.features.indexOf(evt.graphic);
+				routeParameters.stops.features.splice(index, 1);
+				routeParameters.stops.features.splice(index, 0, this.add(new Graphic(evt.mapPoint, symbol)));
 				this.remove(evt.graphic);
 			});
 			stops.on("mouse-up", function(evt) {
@@ -57,21 +56,15 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 				}
 			});
 			this.map.addLayer(stops);
-			symbol = new SimpleMarkerSymbol();
-			symbol.setStyle(SimpleMarkerSymbol.STYLE_DIAMOND).setSize(30);
-			routeSymbol = new SimpleLineSymbol();
-			routeSymbol.setColor(new Color([0, 0, 255, 0.5]));
-			routeSymbol.setWidth(5);
 			/*
 			 this.map.on("dbl-click", function(evt) {
 			 locator.locationToAddress(webMercatorUtils.webMercatorToGeographic(evt.mapPoint), 100);
 			 });
 			 */
 			this.map.on("dbl-click", function(evt) {
-				//get the associated node info when the graphic is clicked
-				var g = new Graphic(evt.mapPoint, symbol);
 				if (routeParameters.stops.features.length < 2)
-					routeParameters.stops.features.push(this.getLayer("graphicsLayer0").add(g));
+					routeParameters.stops.features.push(this.getLayer("graphicsLayer0").add(new Graphic(evt.mapPoint, symbol)));
+
 				if (routeParameters.stops.features.length == 2) {
 					routeTask.solve(routeParameters);
 				}
