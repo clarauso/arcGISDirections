@@ -10,6 +10,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 		_mapLoaded : function() {
 			// Map is ready
 			console.log("mapLoaded");
+			var dragging = false;
 			var task;
 			var toRemove;
 			var map = this.map;
@@ -19,8 +20,8 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			edit.on("graphic-move-start", function(evt) {
 				console.log("move-start");
 				stopIndex = stops.graphics.indexOf(evt.graphic);
-				console.log(evt.graphic.geometry.x);
-				console.log(evt.graphic.geometry.y);
+				stopSymbol = evt.graphic.symbol;
+				dragging = true;
 				if (task === undefined) {
 					task = setInterval(function() {
 						routeTask.solve(routeParameters);
@@ -28,33 +29,12 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 				}
 			});
 			edit.on("graphic-move", function(evt) {
-				console.log("move");
-				//routeParameters.stops.features.splice(stopIndex, 1);
-				//routeParameters.stops.features.splice(stopIndex, 0, evt.graphic);
-				//console.log(routeParameters.stops.features[stopIndex].geometry.x = evt.graphic.geometry.x + evt.transform.dx);
-				//console.log(routeParameters.stops.features[stopIndex].geometry.y = evt.graphic.geometry.y + evt.transform.dy);
-				console.log(evt.graphic.geometry.x);
-				console.log(evt.transform.dx);
-				console.log(evt.graphic.geometry.y);
-				console.log(evt.transform.dy);
-				//console.log(routeParameters.stops.features[stopIndex]);
-				//console.log("moving");
-				//console.log(evt.transform);
-				/*
-				console.log(evt.graphic.geometry.x);
-				console.log(evt.graphic.geometry.x + evt.transform.dx);
-				evt.graphic.geometry.x = evt.graphic.geometry.x + evt.transform.dx;
-				console.log(evt.graphic.geometry.y);
-				console.log(evt.graphic.geometry.y + evt.transform.dy);
-				evt.graphic.geometry.y = evt.graphic.geometry.y + evt.transform.dy;
-				*/
+				routeParameters.stops.features.splice(stopIndex, 1);
+				routeParameters.stops.features.splice(stopIndex, 0, new Graphic(currentPoint, stopSymbol));
 			});
 			edit.on("graphic-move-stop", function(evt) {
 				console.log("move-stop");
-				console.log(evt.graphic.geometry.x);
-				console.log(evt.transform.dx);
-				console.log(evt.graphic.geometry.y);
-				console.log(evt.transform.dy);
+				dragging = false;
 				if (task !== undefined) {
 					clearInterval(task);
 					task = undefined;
@@ -101,8 +81,9 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 					routeTask.solve(routeParameters);
 				}
 			});
-			this.map.on("click", function(evt) {
-				console.log(evt.mapPoint);
+			this.map.on("mouse-move", function(evt) {
+				if(dragging === true)
+					currentPoint = evt.mapPoint;
 			});
 			// reverse geocoding service
 			var locator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
@@ -149,4 +130,4 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			}));
 		}
 	});
-});
+}); 
