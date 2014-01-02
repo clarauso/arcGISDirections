@@ -1,4 +1,4 @@
-define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/dijit/Directions", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "application/defaultPlacemarks"], function(ready, declare, lang, Color, arcgisUtils, IdentityManager, on, Directions, Locator, webMercatorUtils, GraphicsLayer, SimpleMarkerSymbol, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, placemarks) {
+define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/dijit/Directions", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "application/defaultPlacemarks", "esri/toolbars/edit"], function(ready, declare, lang, Color, arcgisUtils, IdentityManager, on, Directions, Locator, webMercatorUtils, GraphicsLayer, SimpleMarkerSymbol, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, placemarks, Edit) {
 	return declare("", null, {
 		config : {},
 		constructor : function(config) {
@@ -10,12 +10,56 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 		_mapLoaded : function() {
 			// Map is ready
 			console.log("mapLoaded");
-			var dragging;
 			var task;
 			var toRemove;
 			var map = this.map;
 			var stopIndex;
 			var stopSymbol;
+			var edit = new Edit(this.map);
+			edit.on("graphic-move-start", function(evt) {
+				console.log("move-start");
+				stopIndex = stops.graphics.indexOf(evt.graphic);
+				console.log(evt.graphic.geometry.x);
+				console.log(evt.graphic.geometry.y);
+				if (task === undefined) {
+					task = setInterval(function() {
+						routeTask.solve(routeParameters);
+					}, 600);
+				}
+			});
+			edit.on("graphic-move", function(evt) {
+				console.log("move");
+				//routeParameters.stops.features.splice(stopIndex, 1);
+				//routeParameters.stops.features.splice(stopIndex, 0, evt.graphic);
+				//console.log(routeParameters.stops.features[stopIndex].geometry.x = evt.graphic.geometry.x + evt.transform.dx);
+				//console.log(routeParameters.stops.features[stopIndex].geometry.y = evt.graphic.geometry.y + evt.transform.dy);
+				console.log(evt.graphic.geometry.x);
+				console.log(evt.transform.dx);
+				console.log(evt.graphic.geometry.y);
+				console.log(evt.transform.dy);
+				//console.log(routeParameters.stops.features[stopIndex]);
+				//console.log("moving");
+				//console.log(evt.transform);
+				/*
+				console.log(evt.graphic.geometry.x);
+				console.log(evt.graphic.geometry.x + evt.transform.dx);
+				evt.graphic.geometry.x = evt.graphic.geometry.x + evt.transform.dx;
+				console.log(evt.graphic.geometry.y);
+				console.log(evt.graphic.geometry.y + evt.transform.dy);
+				evt.graphic.geometry.y = evt.graphic.geometry.y + evt.transform.dy;
+				*/
+			});
+			edit.on("graphic-move-stop", function(evt) {
+				console.log("move-stop");
+				console.log(evt.graphic.geometry.x);
+				console.log(evt.transform.dx);
+				console.log(evt.graphic.geometry.y);
+				console.log(evt.transform.dy);
+				if (task !== undefined) {
+					clearInterval(task);
+					task = undefined;
+				}
+			});
 			var routeSymbol = new SimpleLineSymbol();
 			routeSymbol.setColor(new Color([0, 0, 255, 0.5]));
 			routeSymbol.setWidth(5);
@@ -33,33 +77,8 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			routeParameters.outSpatialReference = {
 				"wkid" : 102100
 			};
+			var editingEnabled = false;
 			var stops = new GraphicsLayer();
-			stops.on("mouse-down", function(evt) {
-				console.log(evt);
-				stopIndex = routeParameters.stops.features.indexOf(evt.graphic);
-				stopSymbol = evt.graphic.symbol;
-				dragging = true;
-				map.disablePan();
-				if (task === undefined) {
-					task = setInterval(function() {
-						routeTask.solve(routeParameters);
-					}, 600);
-				}
-			});
-			stops.on("mouse-drag", function(evt) {
-				routeParameters.stops.features.splice(stopIndex, 1);
-				routeParameters.stops.features.splice(stopIndex, 0, stops.add(new Graphic(evt.mapPoint, stopSymbol)));
-				if (evt.graphic != undefined)
-					stops.remove(evt.graphic);
-			});
-			stops.on("mouse-up", function(evt) {
-				if (task !== undefined) {
-					clearInterval(task);
-					task = undefined;
-				}
-				map.enablePan();
-				dragging = false;
-			});
 			this.map.addLayer(stops);
 			/*
 			 this.map.on("dbl-click", function(evt) {
@@ -67,34 +86,23 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			 });
 			 */
 			this.map.on("dbl-click", function(evt) {
+				var graphicStop;
 				if (routeParameters.stops.features.length == 0) {
-					routeParameters.stops.features.push(this.getLayer("graphicsLayer0").add(new Graphic(evt.mapPoint, placemarks.start)));
+					graphicStop = new Graphic(evt.mapPoint, placemarks.start);
+					routeParameters.stops.features.push(this.getLayer("graphicsLayer0").add(graphicStop));
+					edit.activate(Edit.MOVE, graphicStop);
 				} else if (routeParameters.stops.features.length == 1) {
-					routeParameters.stops.features.push(this.getLayer("graphicsLayer0").add(new Graphic(evt.mapPoint, placemarks.end)));
+					graphicStop = new Graphic(evt.mapPoint, placemarks.end);
+					routeParameters.stops.features.push(this.getLayer("graphicsLayer0").add(graphicStop));
+					edit.activate(Edit.MOVE, graphicStop);
 				}
 
 				if (routeParameters.stops.features.length == 2) {
 					routeTask.solve(routeParameters);
 				}
 			});
-			this.map.on("mouse-drag", function(evt) {
-				/*
-				 if (dragging == true) {
-				 stops.graphics.splice(stopIndex, 1);
-				 routeParameters.stops.features.splice(stopIndex, 1);
-				 routeParameters.stops.features.splice(stopIndex, 0, stops.add(new Graphic(evt.mapPoint, stopSymbol)));
-				 }
-				 */
-			});
-			this.map.on("mouse-up", function(evt) {
-				if (dragging == true) {
-					if (task !== undefined) {
-						clearInterval(task);
-						task = undefined;
-					}
-					map.enablePan();
-					dragging = false;
-				}
+			this.map.on("click", function(evt) {
+				console.log(evt.mapPoint);
 			});
 			// reverse geocoding service
 			var locator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
