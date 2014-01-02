@@ -1,4 +1,4 @@
-define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/dijit/Directions", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet"], function(ready, declare, lang, Color, arcgisUtils, IdentityManager, on, Directions, Locator, webMercatorUtils, GraphicsLayer, SimpleMarkerSymbol, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet) {
+define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/dijit/Directions", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "application/defaultPlacemarks"], function(ready, declare, lang, Color, arcgisUtils, IdentityManager, on, Directions, Locator, webMercatorUtils, GraphicsLayer, SimpleMarkerSymbol, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, placemarks) {
 	return declare("", null, {
 		config : {},
 		constructor : function(config) {
@@ -10,14 +10,15 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 		_mapLoaded : function() {
 			// Map is ready
 			console.log("mapLoaded");
+			var dragging;
+			var task;
+			var toRemove;
 			var map = this.map;
-			var clickedStop;
-			symbol = new SimpleMarkerSymbol();
-			symbol.setStyle(SimpleMarkerSymbol.STYLE_DIAMOND).setSize(30);
-			routeSymbol = new SimpleLineSymbol();
+			var stopIndex;
+			var stopSymbol;
+			var routeSymbol = new SimpleLineSymbol();
 			routeSymbol.setColor(new Color([0, 0, 255, 0.5]));
 			routeSymbol.setWidth(5);
-			var toRemove;
 			var routeTask = new RouteTask("http://route.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World");
 			routeTask.on("solve-complete", function(evt) {
 				if (!(toRemove === undefined))
@@ -27,16 +28,18 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			routeTask.on("error", function(evt) {
 				console.log("routeTask error");
 			});
-			routeParameters = new RouteParameters();
+			var routeParameters = new RouteParameters();
 			routeParameters.stops = new FeatureSet();
 			routeParameters.outSpatialReference = {
 				"wkid" : 102100
 			};
-			var task;
-			stops = new GraphicsLayer();
+			var stops = new GraphicsLayer();
 			stops.on("mouse-down", function(evt) {
 				console.log(evt);
-				if(evt.graphic)
+				stopIndex = routeParameters.stops.features.indexOf(evt.graphic);
+				stopSymbol = evt.graphic.symbol;
+				dragging = true;
+				map.disablePan();
 				if (task === undefined) {
 					task = setInterval(function() {
 						routeTask.solve(routeParameters);
@@ -44,16 +47,18 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 				}
 			});
 			stops.on("mouse-drag", function(evt) {
-				index = routeParameters.stops.features.indexOf(evt.graphic);
-				routeParameters.stops.features.splice(index, 1);
-				routeParameters.stops.features.splice(index, 0, this.add(new Graphic(evt.mapPoint, symbol)));
-				this.remove(evt.graphic);
+				routeParameters.stops.features.splice(stopIndex, 1);
+				routeParameters.stops.features.splice(stopIndex, 0, stops.add(new Graphic(evt.mapPoint, stopSymbol)));
+				if (evt.graphic != undefined)
+					stops.remove(evt.graphic);
 			});
 			stops.on("mouse-up", function(evt) {
 				if (task !== undefined) {
 					clearInterval(task);
 					task = undefined;
 				}
+				map.enablePan();
+				dragging = false;
 			});
 			this.map.addLayer(stops);
 			/*
@@ -62,11 +67,33 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			 });
 			 */
 			this.map.on("dbl-click", function(evt) {
-				if (routeParameters.stops.features.length < 2)
-					routeParameters.stops.features.push(this.getLayer("graphicsLayer0").add(new Graphic(evt.mapPoint, symbol)));
+				if (routeParameters.stops.features.length == 0) {
+					routeParameters.stops.features.push(this.getLayer("graphicsLayer0").add(new Graphic(evt.mapPoint, placemarks.start)));
+				} else if (routeParameters.stops.features.length == 1) {
+					routeParameters.stops.features.push(this.getLayer("graphicsLayer0").add(new Graphic(evt.mapPoint, placemarks.end)));
+				}
 
 				if (routeParameters.stops.features.length == 2) {
 					routeTask.solve(routeParameters);
+				}
+			});
+			this.map.on("mouse-drag", function(evt) {
+				/*
+				 if (dragging == true) {
+				 stops.graphics.splice(stopIndex, 1);
+				 routeParameters.stops.features.splice(stopIndex, 1);
+				 routeParameters.stops.features.splice(stopIndex, 0, stops.add(new Graphic(evt.mapPoint, stopSymbol)));
+				 }
+				 */
+			});
+			this.map.on("mouse-up", function(evt) {
+				if (dragging == true) {
+					if (task !== undefined) {
+						clearInterval(task);
+						task = undefined;
+					}
+					map.enablePan();
+					dragging = false;
 				}
 			});
 			// reverse geocoding service
