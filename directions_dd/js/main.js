@@ -10,10 +10,10 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 		_mapLoaded : function() {
 			// Map is ready
 			console.log("mapLoaded");
-			var dragging = false;
 			var task;
 			var toRemove;
 			var map = this.map;
+			var mouseMapListener;
 			var stopIndex;
 			var stopSymbol;
 			var edit = new Edit(this.map);
@@ -21,7 +21,9 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 				console.log("move-start");
 				stopIndex = stops.graphics.indexOf(evt.graphic);
 				stopSymbol = evt.graphic.symbol;
-				dragging = true;
+				mouseMapListener = map.on("mouse-move", function(evt) {
+					currentPoint = evt.mapPoint;
+				});
 				if (task === undefined) {
 					task = setInterval(function() {
 						routeTask.solve(routeParameters);
@@ -34,7 +36,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			});
 			edit.on("graphic-move-stop", function(evt) {
 				console.log("move-stop");
-				dragging = false;
+				mouseMapListener.remove();
 				if (task !== undefined) {
 					clearInterval(task);
 					task = undefined;
@@ -57,7 +59,6 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			routeParameters.outSpatialReference = {
 				"wkid" : 102100
 			};
-			var editingEnabled = false;
 			var stops = new GraphicsLayer();
 			this.map.addLayer(stops);
 			/*
@@ -70,6 +71,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 				if (routeParameters.stops.features.length == 0) {
 					graphicStop = new Graphic(evt.mapPoint, placemarks.start);
 					routeParameters.stops.features.push(this.getLayer("graphicsLayer0").add(graphicStop));
+					// TODO create another Edit var for the start
 					edit.activate(Edit.MOVE, graphicStop);
 				} else if (routeParameters.stops.features.length == 1) {
 					graphicStop = new Graphic(evt.mapPoint, placemarks.end);
@@ -81,10 +83,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 					routeTask.solve(routeParameters);
 				}
 			});
-			this.map.on("mouse-move", function(evt) {
-				if(dragging === true)
-					currentPoint = evt.mapPoint;
-			});
+
 			// reverse geocoding service
 			var locator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 			locator.on("location-to-address-complete", function(evt) {
@@ -130,4 +129,4 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			}));
 		}
 	});
-}); 
+});
