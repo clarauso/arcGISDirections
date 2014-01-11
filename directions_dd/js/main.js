@@ -1,4 +1,4 @@
-define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "application/defaultPlacemarks", "esri/toolbars/edit"], function(ready, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleMarkerSymbol, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, placemarks, Edit) {
+define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "application/defaultPlacemarks", "esri/toolbars/edit", "application/utils/ContextMenu"], function(ready, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleMarkerSymbol, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, placemarks, Edit, ContextMenu) {
 	return declare("", null, {
 		config : {},
 		constructor : function(config) {
@@ -16,9 +16,9 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			var mouseMapListener;
 			var stopIndex;
 			var stopSymbol;
+			var contextMenu = new ContextMenu(this.map);
 			var edit = new Edit(this.map);
 			edit.on("graphic-move-start", function(evt) {
-				console.log("move-start");
 				stopIndex = stops.graphics.indexOf(evt.graphic);
 				stopSymbol = evt.graphic.symbol;
 				mouseMapListener = map.on("mouse-move", function(evt) {
@@ -35,7 +35,6 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 				routeParameters.stops.features.splice(stopIndex, 0, new Graphic(currentPoint, stopSymbol));
 			});
 			edit.on("graphic-move-stop", function(evt) {
-				console.log("move-stop");
 				mouseMapListener.remove();
 				if (task !== undefined) {
 					clearInterval(task);
