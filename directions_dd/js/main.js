@@ -39,7 +39,8 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			contextMenu.addChild(new MenuItem({
 				label : "Parti da qui",
 				onClick : function() {
-					graphicStop = new Graphic(contextPoint, placemarks.start);
+					// TODO reverse geocoding
+					//locator.locationToAddress(webMercatorUtils.webMercatorToGeographic(evt.mapPoint), 100);
 					var stopGraphics = map.getLayer("graphicsLayer0");
 					var routeStops = routeParameters.stops.features;
 					if (stopGraphics.graphics.length == 0) {
@@ -61,7 +62,6 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			contextMenu.addChild(new MenuItem({
 				label : "Arriva qui",
 				onClick : function() {
-					graphicStop = new Graphic(contextPoint, placemarks.start);
 					var stopGraphics = map.getLayer("graphicsLayer0");
 					var routeStops = routeParameters.stops.features;
 					if (stopGraphics.graphics.length == 0) {
@@ -109,6 +109,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 					task = undefined;
 				}
 			});
+			
 			var routeSymbol = new SimpleLineSymbol();
 			routeSymbol.setColor(new Color([0, 0, 255, 0.5]));
 			routeSymbol.setWidth(5);
@@ -128,15 +129,13 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			};
 			var stops = new GraphicsLayer();
 			this.map.addLayer(stops);
-			/*
-			 this.map.on("dbl-click", function(evt) {
-			 locator.locationToAddress(webMercatorUtils.webMercatorToGeographic(evt.mapPoint), 100);
-			 });
-			 */
+			
 			// reverse geocoding service
 			var locator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 			locator.on("location-to-address-complete", function(evt) {
 				if (evt.address.address) {
+					// TODO reverse geocode start and end
+					/*
 					if (directions.stops[0].name === "") {
 						directions.updateStop(evt.address.address.Address + ", " + evt.address.address.City, 0);
 					} else {
@@ -149,6 +148,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 							// Do something when the process provides progress information
 						});
 					}
+					*/
 				}
 			});
 		},
