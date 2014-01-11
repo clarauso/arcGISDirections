@@ -36,22 +36,57 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 					contextPoint = map.toMap(new Point(x - map.position.x, y - map.position.y));
 				}
 			});
-
 			contextMenu.addChild(new MenuItem({
 				label : "Parti da qui",
 				onClick : function() {
-					contextMenu.emit("start", null);
+					//contextMenu.emit("start", null);
+					graphicStop = new Graphic(contextPoint, placemarks.start);
+					var stopGraphics = map.getLayer("graphicsLayer0");
+					var routeStops = routeParameters.stops.features;
+					if(stopGraphics.graphics.length == 0) {
+						stopGraphics.add(new Graphic(null, placemarks.start));
+						stopGraphics.add(new Graphic(null, placemarks.end));
+					}
+					stopGraphics.graphics[0].setGeometry(contextPoint);
+					if(routeStops.length == 0) {
+						routeStops.push(null);
+						routeStops.push(null);
+					}
+					routeStops.splice(0, 1, stopGraphics.graphics[0]);
+					
+					if(routeStops[0] != null && routeStops[1] != null) {
+						routeTask.solve(routeParameters);
+					}
 				}
 			}));
 			contextMenu.addChild(new MenuItem({
 				label : "Arriva qui",
 				onClick : function() {
-					contextMenu.emit("end", null);
+					//contextMenu.emit("end", null);
+					graphicStop = new Graphic(contextPoint, placemarks.start);
+					var stopGraphics = map.getLayer("graphicsLayer0");
+					var routeStops = routeParameters.stops.features;
+					if(stopGraphics.graphics.length == 0) {
+						stopGraphics.add(new Graphic(null, placemarks.start));
+						stopGraphics.add(new Graphic(null, placemarks.end));
+					}
+					stopGraphics.graphics[1].setGeometry(contextPoint);
+					if(routeStops.length == 0) {
+						routeStops.push(null);
+						routeStops.push(null);
+					}
+					routeStops.splice(1, 1, stopGraphics.graphics[1]);
+					
+					if(routeStops[0] != null && routeStops[1] != null) {
+						routeTask.solve(routeParameters);
+					}
+					
+					edit.activate(Edit.MOVE, routeStops[1]);
 				}
 			}));
-
 			contextMenu.startup();
 			contextMenu.bindDomNode(map.container);
+			
 			var edit = new Edit(this.map);
 			edit.on("graphic-move-start", function(evt) {
 				stopIndex = stops.graphics.indexOf(evt.graphic);
@@ -106,24 +141,6 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			on(contextMenu, "end", function(evt) {
 				console.log("end: " + contextPoint.getLatitude() + ", " + contextPoint.getLongitude());
 			});
-			this.map.on("dbl-click", function(evt) {
-				var graphicStop;
-				if (routeParameters.stops.features.length == 0) {
-					graphicStop = new Graphic(evt.mapPoint, placemarks.start);
-					routeParameters.stops.features.push(this.getLayer("graphicsLayer0").add(graphicStop));
-					// TODO create another Edit var for the start
-					edit.activate(Edit.MOVE, graphicStop);
-				} else if (routeParameters.stops.features.length == 1) {
-					graphicStop = new Graphic(evt.mapPoint, placemarks.end);
-					routeParameters.stops.features.push(this.getLayer("graphicsLayer0").add(graphicStop));
-					edit.activate(Edit.MOVE, graphicStop);
-				}
-
-				if (routeParameters.stops.features.length == 2) {
-					routeTask.solve(routeParameters);
-				}
-			});
-
 			// reverse geocoding service
 			var locator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 			locator.on("location-to-address-complete", function(evt) {
