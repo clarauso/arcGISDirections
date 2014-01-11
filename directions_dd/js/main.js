@@ -1,4 +1,4 @@
-define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "application/defaultPlacemarks", "esri/toolbars/edit", "application/utils/ContextMenu"], function(ready, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleMarkerSymbol, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, placemarks, Edit, ContextMenu) {
+define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "application/defaultPlacemarks", "esri/toolbars/edit", "dijit/Menu", "dijit/MenuItem", "esri/geometry/Point"], function(ready, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleMarkerSymbol, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, placemarks, Edit, Menu, MenuItem, Point) {
 	return declare("", null, {
 		config : {},
 		constructor : function(config) {
@@ -16,7 +16,42 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			var mouseMapListener;
 			var stopIndex;
 			var stopSymbol;
-			var contextMenu = new ContextMenu(this.map);
+			var contextPoint;
+			var contextMenu = new Menu({
+				onOpen : function(box) {
+					var x = box.x, y = box.y;
+					switch( box.corner ) {
+						case "TR":
+							x += box.w;
+							break;
+						case "BL":
+							y += box.h;
+							break;
+						case "BR":
+							x += box.w;
+							y += box.h;
+							break;
+					}
+
+					contextPoint = map.toMap(new Point(x - map.position.x, y - map.position.y));
+				}
+			});
+
+			contextMenu.addChild(new MenuItem({
+				label : "Parti da qui",
+				onClick : function() {
+					contextMenu.emit("start", null);
+				}
+			}));
+			contextMenu.addChild(new MenuItem({
+				label : "Arriva qui",
+				onClick : function() {
+					contextMenu.emit("end", null);
+				}
+			}));
+
+			contextMenu.startup();
+			contextMenu.bindDomNode(map.container);
 			var edit = new Edit(this.map);
 			edit.on("graphic-move-start", function(evt) {
 				stopIndex = stops.graphics.indexOf(evt.graphic);
@@ -65,6 +100,12 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			 locator.locationToAddress(webMercatorUtils.webMercatorToGeographic(evt.mapPoint), 100);
 			 });
 			 */
+			on(contextMenu, "start", function(evt) {
+				console.log("start: " + contextPoint.getLatitude() + ", " + contextPoint.getLongitude());
+			});
+			on(contextMenu, "end", function(evt) {
+				console.log("end: " + contextPoint.getLatitude() + ", " + contextPoint.getLongitude());
+			});
 			this.map.on("dbl-click", function(evt) {
 				var graphicStop;
 				if (routeParameters.stops.features.length == 0) {
