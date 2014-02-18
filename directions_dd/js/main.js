@@ -1,4 +1,4 @@
-define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "application/defaultPlacemarks", "esri/toolbars/edit", "dijit/Menu", "dijit/MenuItem", "esri/geometry/Point"], function(ready, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleMarkerSymbol, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, placemarks, Edit, Menu, MenuItem, Point) {
+define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "application/defaultPlacemarks", "esri/toolbars/edit", "dijit/MenuItem", "esri/geometry/Point", "application/utils/DirectionsMenu"], function(ready, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleMarkerSymbol, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, placemarks, Edit, MenuItem, Point, DirectionsMenu) {
 	return declare("", null, {
 		config : {},
 		constructor : function(config) {
@@ -16,38 +16,29 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			var mouseMapListener;
 			var stopIndex;
 			var stopSymbol;
-			var contextPoint;
-			var contextMenu = new Menu({
-				onOpen : function(box) {
-					var x = box.x, y = box.y;
-					switch( box.corner ) {
-						case "TR":
-							x += box.w;
-							break;
-						case "BL":
-							y += box.h;
-							break;
-						case "BR":
-							x += box.w;
-							y += box.h;
-							break;
-					}
-
-					contextPoint = map.toMap(new Point(x - map.position.x, y - map.position.y));
-				}
-			});
-			contextMenu.addChild(new MenuItem({
+			var currentPoint;
+			var routeParameters = new RouteParameters();
+			routeParameters.stops = new FeatureSet();
+			routeParameters.outSpatialReference = {
+				"wkid" : 102100
+			};
+			var dirMenu = new DirectionsMenu(map);
+			dirMenu.setMap(this.map);
+			dirMenu.setParams(routeParameters);
+			dirMenu.startup();
+			dirMenu.bindDomNode(map.container);
+			dirMenu.addChild(new MenuItem({
 				label : "Parti da qui",
 				onClick : function() {
 					// TODO reverse geocoding
-					locator.locationToAddress(webMercatorUtils.webMercatorToGeographic(contextPoint), 100);
+					//locator.locationToAddress(webMercatorUtils.webMercatorToGeographic(contextPoint), 100);
 					var stopGraphics = map.getLayer("graphicsLayer0");
 					var routeStops = routeParameters.stops.features;
 					if (stopGraphics.graphics.length == 0) {
 						stopGraphics.add(new Graphic(null, placemarks.start));
 						stopGraphics.add(new Graphic(null, placemarks.end));
 					}
-					stopGraphics.graphics[0].setGeometry(contextPoint);
+					stopGraphics.graphics[0].setGeometry(dirMenu.getCurrentPoint());
 					if (routeStops.length == 0) {
 						routeStops.push(null);
 						routeStops.push(null);
@@ -59,7 +50,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 					}
 				}
 			}));
-			contextMenu.addChild(new MenuItem({
+			dirMenu.addChild(new MenuItem({
 				label : "Arriva qui",
 				onClick : function() {
 					var stopGraphics = map.getLayer("graphicsLayer0");
@@ -68,7 +59,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 						stopGraphics.add(new Graphic(null, placemarks.start));
 						stopGraphics.add(new Graphic(null, placemarks.end));
 					}
-					stopGraphics.graphics[1].setGeometry(contextPoint);
+					stopGraphics.graphics[1].setGeometry(dirMenu.getCurrentPoint());
 					if (routeStops.length == 0) {
 						routeStops.push(null);
 						routeStops.push(null);
@@ -82,8 +73,8 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 					edit.activate(Edit.MOVE, routeStops[1]);
 				}
 			}));
-			contextMenu.startup();
-			contextMenu.bindDomNode(map.container);
+			dirMenu.startup();
+			dirMenu.bindDomNode(map.container);
 
 			var edit = new Edit(this.map);
 			edit.on("graphic-move-start", function(evt) {
@@ -112,7 +103,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 				routeParameters.returnDirections = true;
 				routeTask.solve(routeParameters);
 			});
-			
+
 			var routeSymbol = new SimpleLineSymbol();
 			routeSymbol.setColor(new Color([0, 0, 255, 0.5]));
 			routeSymbol.setWidth(5);
@@ -121,20 +112,15 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 				if (!(toRemove === undefined))
 					map.graphics.remove(toRemove);
 				toRemove = map.graphics.add(evt.result.routeResults[0].route.setSymbol(routeSymbol));
-				if(routeParameters.returnDirections === true)
+				if (routeParameters.returnDirections === true)
 					console.log(evt.result.routeResults[0].directions.features);
 			});
 			routeTask.on("error", function(evt) {
 				console.log("routeTask error");
 			});
-			var routeParameters = new RouteParameters();
-			routeParameters.stops = new FeatureSet();
-			routeParameters.outSpatialReference = {
-				"wkid" : 102100
-			};
 			var stops = new GraphicsLayer();
 			this.map.addLayer(stops);
-			
+
 			// reverse geocoding service
 			var locator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 			locator.on("location-to-address-complete", function(evt) {
@@ -142,19 +128,19 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 					console.log(evt.address);
 					// TODO reverse geocode start and end
 					/*
-					if (directions.stops[0].name === "") {
-						directions.updateStop(evt.address.address.Address + ", " + evt.address.address.City, 0);
-					} else {
-						directions.updateStop(evt.address.address.Address + ", " + evt.address.address.City, 1).then(function(value) {
-							// directions updated, get directions
-							directions.emit("get-directions", null);
-						}, function(err) {
-							// Do something when the process errors out
-						}, function(update) {
-							// Do something when the process provides progress information
-						});
-					}
-					*/
+					 if (directions.stops[0].name === "") {
+					 directions.updateStop(evt.address.address.Address + ", " + evt.address.address.City, 0);
+					 } else {
+					 directions.updateStop(evt.address.address.Address + ", " + evt.address.address.City, 1).then(function(value) {
+					 // directions updated, get directions
+					 directions.emit("get-directions", null);
+					 }, function(err) {
+					 // Do something when the process errors out
+					 }, function(update) {
+					 // Do something when the process provides progress information
+					 });
+					 }
+					 */
 				}
 			});
 		},
@@ -184,4 +170,4 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			}));
 		}
 	});
-});
+}); 
