@@ -40,7 +40,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 				label : "Parti da qui",
 				onClick : function() {
 					// TODO reverse geocoding
-					//locator.locationToAddress(webMercatorUtils.webMercatorToGeographic(evt.mapPoint), 100);
+					locator.locationToAddress(webMercatorUtils.webMercatorToGeographic(contextPoint), 100);
 					var stopGraphics = map.getLayer("graphicsLayer0");
 					var routeStops = routeParameters.stops.features;
 					if (stopGraphics.graphics.length == 0) {
@@ -89,6 +89,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			edit.on("graphic-move-start", function(evt) {
 				stopIndex = stops.graphics.indexOf(evt.graphic);
 				stopSymbol = evt.graphic.symbol;
+				routeParameters.returnDirections = false;
 				mouseMapListener = map.on("mouse-move", function(evt) {
 					currentPoint = evt.mapPoint;
 				});
@@ -108,6 +109,8 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 					clearInterval(task);
 					task = undefined;
 				}
+				routeParameters.returnDirections = true;
+				routeTask.solve(routeParameters);
 			});
 			
 			var routeSymbol = new SimpleLineSymbol();
@@ -118,6 +121,8 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 				if (!(toRemove === undefined))
 					map.graphics.remove(toRemove);
 				toRemove = map.graphics.add(evt.result.routeResults[0].route.setSymbol(routeSymbol));
+				if(routeParameters.returnDirections === true)
+					console.log(evt.result.routeResults[0].directions.features);
 			});
 			routeTask.on("error", function(evt) {
 				console.log("routeTask error");
@@ -134,6 +139,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			var locator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 			locator.on("location-to-address-complete", function(evt) {
 				if (evt.address.address) {
+					console.log(evt.address);
 					// TODO reverse geocode start and end
 					/*
 					if (directions.stops[0].name === "") {
