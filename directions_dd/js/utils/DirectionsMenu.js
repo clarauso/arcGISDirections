@@ -4,7 +4,6 @@ define(["dojo/_base/declare", "dijit/Menu", "esri/geometry/Point"], function(dec
 		map : {},
 		params : {},
 		constructor : function() {
-			
 		},
 		setMap : function(map) {
 			this.map = map;
@@ -14,6 +13,9 @@ define(["dojo/_base/declare", "dijit/Menu", "esri/geometry/Point"], function(dec
 		},
 		getCurrentPoint : function() {
 			return this.currentPoint;
+		},
+		getMap : function() {
+			return this.map;
 		},
 		onOpen : function(box) {
 			var x = box.x, y = box.y;

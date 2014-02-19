@@ -1,4 +1,4 @@
-define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "application/defaultPlacemarks", "esri/toolbars/edit", "dijit/MenuItem", "esri/geometry/Point", "application/utils/DirectionsMenu"], function(ready, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleMarkerSymbol, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, placemarks, Edit, MenuItem, Point, DirectionsMenu) {
+define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "application/defaultPlacemarks", "esri/toolbars/edit", "dijit/MenuItem", "esri/geometry/Point", "application/utils/DirectionsMenu", "application/utils/DirectionsMenuItem"], function(ready, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleMarkerSymbol, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, placemarks, Edit, MenuItem, Point, DirectionsMenu, DirectionsMenuItem) {
 	return declare("", null, {
 		config : {},
 		constructor : function(config) {
@@ -8,8 +8,6 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			}));
 		},
 		_mapLoaded : function() {
-			// Map is ready
-			console.log("mapLoaded");
 			var task;
 			var toRemove;
 			var map = this.map;
@@ -17,65 +15,32 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			var stopIndex;
 			var stopSymbol;
 			var currentPoint;
+			// parameters
 			var routeParameters = new RouteParameters();
 			routeParameters.stops = new FeatureSet();
 			routeParameters.outSpatialReference = {
 				"wkid" : 102100
 			};
-			var dirMenu = new DirectionsMenu(map);
-			dirMenu.setMap(this.map);
-			dirMenu.setParams(routeParameters);
-			dirMenu.startup();
-			dirMenu.bindDomNode(map.container);
-			dirMenu.addChild(new MenuItem({
-				label : "Parti da qui",
-				onClick : function() {
-					// TODO reverse geocoding
-					//locator.locationToAddress(webMercatorUtils.webMercatorToGeographic(contextPoint), 100);
-					var stopGraphics = map.getLayer("graphicsLayer0");
-					var routeStops = routeParameters.stops.features;
-					if (stopGraphics.graphics.length == 0) {
-						stopGraphics.add(new Graphic(null, placemarks.start));
-						stopGraphics.add(new Graphic(null, placemarks.end));
-					}
-					stopGraphics.graphics[0].setGeometry(dirMenu.getCurrentPoint());
-					if (routeStops.length == 0) {
-						routeStops.push(null);
-						routeStops.push(null);
-					}
-					routeStops.splice(0, 1, stopGraphics.graphics[0]);
-
-					if (routeStops[0] != null && routeStops[1] != null) {
-						routeTask.solve(routeParameters);
-					}
-				}
-			}));
-			dirMenu.addChild(new MenuItem({
-				label : "Arriva qui",
-				onClick : function() {
-					var stopGraphics = map.getLayer("graphicsLayer0");
-					var routeStops = routeParameters.stops.features;
-					if (stopGraphics.graphics.length == 0) {
-						stopGraphics.add(new Graphic(null, placemarks.start));
-						stopGraphics.add(new Graphic(null, placemarks.end));
-					}
-					stopGraphics.graphics[1].setGeometry(dirMenu.getCurrentPoint());
-					if (routeStops.length == 0) {
-						routeStops.push(null);
-						routeStops.push(null);
-					}
-					routeStops.splice(1, 1, stopGraphics.graphics[1]);
-
-					if (routeStops[0] != null && routeStops[1] != null) {
-						routeTask.solve(routeParameters);
-					}
-
-					edit.activate(Edit.MOVE, routeStops[1]);
-				}
-			}));
-			dirMenu.startup();
-			dirMenu.bindDomNode(map.container);
-
+			// route line
+			var routeSymbol = new SimpleLineSymbol();
+			routeSymbol.setColor(new Color([0, 0, 255, 0.5]));
+			routeSymbol.setWidth(5);
+			// stops
+			var stops = new GraphicsLayer();
+			this.map.addLayer(stops);
+			// routing task
+			var routeTask = new RouteTask("http://route.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World");
+			routeTask.on("solve-complete", function(evt) {
+				if (toRemove !== undefined)
+					map.graphics.remove(toRemove);
+				toRemove = map.graphics.add(evt.result.routeResults[0].route.setSymbol(routeSymbol));
+				if (routeParameters.returnDirections === true)
+					console.log(evt.result.routeResults[0].directions.features);
+			});
+			routeTask.on("error", function(evt) {
+				console.log("routeTask error");
+			});
+			// end edit
 			var edit = new Edit(this.map);
 			edit.on("graphic-move-start", function(evt) {
 				stopIndex = stops.graphics.indexOf(evt.graphic);
@@ -103,24 +68,31 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 				routeParameters.returnDirections = true;
 				routeTask.solve(routeParameters);
 			});
-
-			var routeSymbol = new SimpleLineSymbol();
-			routeSymbol.setColor(new Color([0, 0, 255, 0.5]));
-			routeSymbol.setWidth(5);
-			var routeTask = new RouteTask("http://route.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World");
-			routeTask.on("solve-complete", function(evt) {
-				if (!(toRemove === undefined))
-					map.graphics.remove(toRemove);
-				toRemove = map.graphics.add(evt.result.routeResults[0].route.setSymbol(routeSymbol));
-				if (routeParameters.returnDirections === true)
-					console.log(evt.result.routeResults[0].directions.features);
+			// context menu
+			var dirMenu = new DirectionsMenu();
+			dirMenu.setMap(this.map);
+			dirMenu.setParams(routeParameters);
+			// start
+			var startItem = new DirectionsMenuItem({
+				label : "Parti da qui"
 			});
-			routeTask.on("error", function(evt) {
-				console.log("routeTask error");
+			startItem.setIndex(0);
+			startItem.setMenu(dirMenu);
+			startItem.setParameters(routeParameters);
+			startItem.setTask(routeTask);
+			dirMenu.addChild(startItem);
+			// end
+			var endItem = new DirectionsMenuItem({
+				label : "Arriva qui"
 			});
-			var stops = new GraphicsLayer();
-			this.map.addLayer(stops);
-
+			endItem.setIndex(1);
+			endItem.setMenu(dirMenu);
+			endItem.setParameters(routeParameters);
+			endItem.setTask(routeTask);
+			endItem.setEdit(edit);
+			dirMenu.addChild(endItem);
+			dirMenu.startup();
+			dirMenu.bindDomNode(map.container);
 			// reverse geocoding service
 			var locator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 			locator.on("location-to-address-complete", function(evt) {
@@ -170,4 +142,4 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			}));
 		}
 	});
-}); 
+});
