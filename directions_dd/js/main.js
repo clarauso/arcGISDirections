@@ -34,6 +34,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 				if (toRemove !== undefined)
 					map.graphics.remove(toRemove);
 				toRemove = map.graphics.add(evt.result.routeResults[0].route.setSymbol(routeSymbol));
+				//map.setExtent(evt.result.routeResults[0].directions.mergedGeometry.getExtent(), true);
 				if (routeParameters.returnDirections === true)
 					console.log(evt.result.routeResults[0].directions.features);
 			});
@@ -126,7 +127,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			var endLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 			endLocator.outSpatialReference = map.spatialReference;
 			endLocator.on("address-to-locations-complete", function(evt) {
-				stopManager.addStop(map, routeParameters, 1, evt.addresses[0].location, task, undefined);
+				stopManager.addStop(map, routeParameters, 1, evt.addresses[0].location, task, edit);
 			});
 			query("input[type='text']").on("keydown", function(evt) {
 				switch(evt.keyCode) {
@@ -138,17 +139,14 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 							var address = {
 								"SingleLine" : s
 							};
-							if (target == "start") {
-								startLocator.addressToLocations({
-									address : address,
-									outFields : ["Loc_name"]
-								});
-							} else if (target == "end"){
-								endLocator.addressToLocations({
-									address : address,
-									outFields : ["Loc_name"]
-								});
-							}
+							var params = {
+								address : address,
+								outFields : ["Loc_name"]
+							};
+							if (target == "start")
+								startLocator.addressToLocations(params);
+							else if (target == "end")
+								endLocator.addressToLocations(params);
 						}
 						break;
 					default:
