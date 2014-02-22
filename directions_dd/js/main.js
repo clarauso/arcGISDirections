@@ -41,9 +41,8 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			routeTask.on("error", function(evt) {
 				console.log("routeTask error");
 			});
-			// end edit
-			var edit = new Edit(this.map);
-			edit.on("graphic-move-start", function(evt) {
+			var startEdit = new Edit(this.map);
+			startEdit.on("graphic-move-start", function(evt) {
 				stopIndex = stops.graphics.indexOf(evt.graphic);
 				stopSymbol = evt.graphic.symbol;
 				routeParameters.returnDirections = false;
@@ -56,11 +55,11 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 					}, 600);
 				}
 			});
-			edit.on("graphic-move", function(evt) {
+			startEdit.on("graphic-move", function(evt) {
 				routeParameters.stops.features.splice(stopIndex, 1);
 				routeParameters.stops.features.splice(stopIndex, 0, new Graphic(currentPoint, stopSymbol));
 			});
-			edit.on("graphic-move-stop", function(evt) {
+			startEdit.on("graphic-move-stop", function(evt) {
 				mouseMapListener.remove();
 				if (task !== undefined) {
 					clearInterval(task);
@@ -70,7 +69,34 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 				routeTask.solve(routeParameters);
 			});
 			
-			var startEdit = new DirectionsEdit(this.map);
+			// end edit
+			var endEdit = new Edit(this.map);
+			endEdit.on("graphic-move-start", function(evt) {
+				stopIndex = stops.graphics.indexOf(evt.graphic);
+				stopSymbol = evt.graphic.symbol;
+				routeParameters.returnDirections = false;
+				mouseMapListener = map.on("mouse-move", function(evt) {
+					currentPoint = evt.mapPoint;
+				});
+				if (task === undefined) {
+					task = setInterval(function() {
+						routeTask.solve(routeParameters);
+					}, 600);
+				}
+			});
+			endEdit.on("graphic-move", function(evt) {
+				routeParameters.stops.features.splice(stopIndex, 1);
+				routeParameters.stops.features.splice(stopIndex, 0, new Graphic(currentPoint, stopSymbol));
+			});
+			endEdit.on("graphic-move-stop", function(evt) {
+				mouseMapListener.remove();
+				if (task !== undefined) {
+					clearInterval(task);
+					task = undefined;
+				}
+				routeParameters.returnDirections = true;
+				routeTask.solve(routeParameters);
+			});
 			// context menu
 			var dirMenu = new DirectionsMenu();
 			dirMenu.setMap(this.map);
@@ -92,7 +118,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			endItem.setMenu(dirMenu);
 			endItem.setParameters(routeParameters);
 			endItem.setTask(routeTask);
-			endItem.setEdit(edit);
+			endItem.setEdit(endEdit);
 			dirMenu.addChild(endItem);
 			dirMenu.startup();
 			dirMenu.bindDomNode(map.container);
