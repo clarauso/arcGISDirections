@@ -2,14 +2,10 @@ define(["dojo/_base/declare", "dijit/Menu", "esri/geometry/Point"], function(dec
 	return declare("DirectionsMenu", Menu, {
 		currentPoint : {},
 		map : {},
-		params : {},
 		constructor : function() {
 		},
 		setMap : function(map) {
 			this.map = map;
-		},
-		setParams : function(params) {
-			this.params = params;
 		},
 		getCurrentPoint : function() {
 			return this.currentPoint;

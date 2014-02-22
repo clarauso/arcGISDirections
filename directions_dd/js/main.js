@@ -1,4 +1,4 @@
-define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "esri/toolbars/edit", "esri/geometry/Point", "application/utils/DirectionsMenu", "application/utils/DirectionsMenuItem"], function(ready, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleMarkerSymbol, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, Edit, Point, DirectionsMenu, DirectionsMenuItem) {
+define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "esri/toolbars/edit", "esri/geometry/Point", "application/utils/DirectionsMenu", "application/utils/DirectionsMenuItem", "application/utils/DirectionsEdit", "dojo/query", "dojo/keys", "dijit/registry", "application/utils/StopsUtils"], function(ready, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleMarkerSymbol, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, Edit, Point, DirectionsMenu, DirectionsMenuItem, DirectionsEdit, query, keys, registry, Stops) {
 	return declare("", null, {
 		config : {},
 		constructor : function(config) {
@@ -68,10 +68,11 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 				routeParameters.returnDirections = true;
 				routeTask.solve(routeParameters);
 			});
+			
+			var startEdit = new DirectionsEdit(this.map);
 			// context menu
 			var dirMenu = new DirectionsMenu();
 			dirMenu.setMap(this.map);
-			dirMenu.setParams(routeParameters);
 			// start
 			var startItem = new DirectionsMenuItem({
 				label : "Parti da qui"
@@ -80,6 +81,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			startItem.setMenu(dirMenu);
 			startItem.setParameters(routeParameters);
 			startItem.setTask(routeTask);
+			startItem.setEdit(startEdit);
 			dirMenu.addChild(startItem);
 			// end
 			var endItem = new DirectionsMenuItem({
@@ -93,7 +95,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			dirMenu.addChild(endItem);
 			dirMenu.startup();
 			dirMenu.bindDomNode(map.container);
-			// reverse geocoding service
+			// geocoding service
 			var locator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 			locator.on("location-to-address-complete", function(evt) {
 				if (evt.address.address) {
@@ -113,6 +115,43 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 					 });
 					 }
 					 */
+				}
+			});
+			var stopManager = new Stops();
+			var startLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
+			startLocator.outSpatialReference = map.spatialReference;
+			startLocator.on("address-to-locations-complete", function(evt) {
+				stopManager.addStop(map, routeParameters, 0, evt.addresses[0].location, task, undefined);
+			});
+			var endLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
+			endLocator.outSpatialReference = map.spatialReference;
+			endLocator.on("address-to-locations-complete", function(evt) {
+				stopManager.addStop(map, routeParameters, 1, evt.addresses[0].location, task, undefined);
+			});
+			query("input[type='text']").on("keydown", function(evt) {
+				switch(evt.keyCode) {
+					case keys.ENTER:
+						evt.preventDefault();
+						var target = evt.originalTarget.id;
+						var s = registry.byId(target).get("value");
+						if (s != undefined || s != "") {
+							var address = {
+								"SingleLine" : s
+							};
+							if (target == "start") {
+								startLocator.addressToLocations({
+									address : address,
+									outFields : ["Loc_name"]
+								});
+							} else if (target == "end"){
+								endLocator.addressToLocations({
+									address : address,
+									outFields : ["Loc_name"]
+								});
+							}
+						}
+						break;
+					default:
 				}
 			});
 		},

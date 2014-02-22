@@ -1,4 +1,4 @@
-define(["dojo/_base/declare", "dijit/MenuItem", "application/defaultPlacemarks", "esri/graphic", "esri/toolbars/edit"], function(declare, MenuItem, Placemarks, Graphic, Edit) {
+define(["dojo/_base/declare", "dijit/MenuItem", "application/utils/StopsUtils"], function(declare, MenuItem, Stops) {
 	return declare("DirectionsMenuItem", MenuItem, {
 		edit : {},
 		index : 0,
@@ -23,6 +23,8 @@ define(["dojo/_base/declare", "dijit/MenuItem", "application/defaultPlacemarks",
 			this.task = task;
 		},
 		onClick : function() {
+			new Stops().addStop(this.menu.getMap(), this.parameters, this.index, this.menu.getCurrentPoint(), this.task, this.edit);
+			/*
 			var stopGraphics = this.menu.getMap().getLayer("graphicsLayer0");
 			var routeStops = this.parameters.stops.features;
 			if (stopGraphics.graphics.length == 0) {
@@ -40,6 +42,7 @@ define(["dojo/_base/declare", "dijit/MenuItem", "application/defaultPlacemarks",
 				this.task.solve(this.parameters);
 
 			this.edit.activate(Edit.MOVE, routeStops[this.index]);
+			*/
 		}
 	});
 
