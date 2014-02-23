@@ -16,7 +16,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			var stopSymbol;
 			var currentPoint;
 			var grid;
-			// parameters
+			// route parameters
 			var routeParameters = new RouteParameters();
 			routeParameters.stops = new FeatureSet();
 			routeParameters.outSpatialReference = {
@@ -66,6 +66,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			routeTask.on("error", function(evt) {
 				console.log("routeTask error");
 			});
+			// move start point
 			var startEdit = new Edit(this.map);
 			startEdit.on("graphic-move-start", function(evt) {
 				stopIndex = stops.graphics.indexOf(evt.graphic);
@@ -93,8 +94,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 				routeParameters.returnDirections = true;
 				routeTask.solve(routeParameters);
 			});
-
-			// end edit
+			// move end point
 			var endEdit = new Edit(this.map);
 			endEdit.on("graphic-move-start", function(evt) {
 				stopIndex = stops.graphics.indexOf(evt.graphic);
@@ -122,6 +122,29 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 				routeParameters.returnDirections = true;
 				routeTask.solve(routeParameters);
 			});
+			var stopManager = new Stops();
+			var startLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
+			startLocator.outSpatialReference = map.spatialReference;
+			startLocator.on("address-to-locations-complete", function(evt) {
+				stopManager.addStop(map, routeParameters, 0, evt.addresses[0].location, task, startEdit);
+			});
+			startLocator.on("location-to-address-complete", function(evt) {
+				if (evt.address.address) {
+					console.log(evt);
+					registry.byId("start").set("value", evt.address.address.Address + ", " + evt.address.address.City);
+				}
+			});
+			var endLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
+			endLocator.outSpatialReference = map.spatialReference;
+			endLocator.on("address-to-locations-complete", function(evt) {
+				stopManager.addStop(map, routeParameters, 1, evt.addresses[0].location, task, endEdit);
+			});
+			endLocator.on("location-to-address-complete", function(evt) {
+				if (evt.address.address) {
+					console.log(evt);
+					registry.byId("end").set("value", evt.address.address.Address + ", " + evt.address.address.City);
+				}
+			});
 			// context menu
 			var dirMenu = new DirectionsMenu();
 			dirMenu.setMap(this.map);
@@ -129,57 +152,27 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			var startItem = new DirectionsMenuItem({
 				label : "Parti da qui"
 			});
+			startItem.setEdit(startEdit);
 			startItem.setIndex(0);
+			startItem.setLocator(startLocator);
 			startItem.setMenu(dirMenu);
 			startItem.setParameters(routeParameters);
 			startItem.setTask(routeTask);
-			startItem.setEdit(startEdit);
 			dirMenu.addChild(startItem);
 			// end
 			var endItem = new DirectionsMenuItem({
 				label : "Arriva qui"
 			});
+			endItem.setEdit(endEdit);
 			endItem.setIndex(1);
+			endItem.setLocator(endLocator);
 			endItem.setMenu(dirMenu);
 			endItem.setParameters(routeParameters);
 			endItem.setTask(routeTask);
-			endItem.setEdit(endEdit);
+			// activate context menu
 			dirMenu.addChild(endItem);
 			dirMenu.startup();
 			dirMenu.bindDomNode(map.container);
-			// geocoding service
-			var locator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
-			locator.on("location-to-address-complete", function(evt) {
-				if (evt.address.address) {
-					console.log(evt.address);
-					// TODO reverse geocode start and end
-					/*
-					 if (directions.stops[0].name === "") {
-					 directions.updateStop(evt.address.address.Address + ", " + evt.address.address.City, 0);
-					 } else {
-					 directions.updateStop(evt.address.address.Address + ", " + evt.address.address.City, 1).then(function(value) {
-					 // directions updated, get directions
-					 directions.emit("get-directions", null);
-					 }, function(err) {
-					 // Do something when the process errors out
-					 }, function(update) {
-					 // Do something when the process provides progress information
-					 });
-					 }
-					 */
-				}
-			});
-			var stopManager = new Stops();
-			var startLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
-			startLocator.outSpatialReference = map.spatialReference;
-			startLocator.on("address-to-locations-complete", function(evt) {
-				stopManager.addStop(map, routeParameters, 0, evt.addresses[0].location, task, startEdit);
-			});
-			var endLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
-			endLocator.outSpatialReference = map.spatialReference;
-			endLocator.on("address-to-locations-complete", function(evt) {
-				stopManager.addStop(map, routeParameters, 1, evt.addresses[0].location, task, endEdit);
-			});
 			query("input[type='text']").on("keydown", function(evt) {
 				switch(evt.keyCode) {
 					case keys.ENTER:
