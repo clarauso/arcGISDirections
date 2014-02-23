@@ -53,7 +53,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 					});
 					grid = new Grid({
 						renderRow : function renderList(obj, options) {
-							var template = "<div class='detail'><div style='max-width:70%;float:left;'>${detail}</div><span style='float:right;' class='distance'>${distance} mi</span></div>";
+							var template = "<div class='detail'><div style='max-width:70%;float:left;'>${detail}</div><span style='float:right;' class='distance'>${distance} km</span></div>";
 							return domConstruct.create("div", {
 								innerHTML : esriLang.substitute(obj, template)
 							});
@@ -61,7 +61,6 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 						showHeader : false
 					}, "grid");
 					grid.renderArray(data);
-					//console.log(evt.result.routeResults[0].directions.features);
 				}
 			});
 			routeTask.on("error", function(evt) {
@@ -174,12 +173,12 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			var startLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 			startLocator.outSpatialReference = map.spatialReference;
 			startLocator.on("address-to-locations-complete", function(evt) {
-				stopManager.addStop(map, routeParameters, 0, evt.addresses[0].location, task, undefined);
+				stopManager.addStop(map, routeParameters, 0, evt.addresses[0].location, task, startEdit);
 			});
 			var endLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 			endLocator.outSpatialReference = map.spatialReference;
 			endLocator.on("address-to-locations-complete", function(evt) {
-				stopManager.addStop(map, routeParameters, 1, evt.addresses[0].location, task, edit);
+				stopManager.addStop(map, routeParameters, 1, evt.addresses[0].location, task, endEdit);
 			});
 			query("input[type='text']").on("keydown", function(evt) {
 				switch(evt.keyCode) {
