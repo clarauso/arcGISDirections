@@ -35,10 +35,11 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			// routing task
 			var routeTask = new RouteTask("http://route.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World");
 			routeTask.on("solve-complete", function(evt) {
+				console.log(evt);
 				if (toRemove !== undefined)
 					map.graphics.remove(toRemove);
 				toRemove = map.graphics.add(evt.result.routeResults[0].route.setSymbol(routeSymbol));
-				//map.setExtent(evt.result.routeResults[0].directions.mergedGeometry.getExtent(), true);
+				map.setExtent(evt.result.routeResults[0].directions.extent, true);
 				if (routeParameters.returnDirections === true) {
 					if (grid)
 						grid.refresh();
@@ -64,7 +65,8 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 				}
 			});
 			routeTask.on("error", function(evt) {
-				console.log("routeTask error");
+				//console.log("routeTask error");
+				//console.log(evt);
 			});
 			// move start point
 			var startEdit = new Edit(this.map);
@@ -86,6 +88,8 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 				routeParameters.stops.features.splice(stopIndex, 0, new Graphic(currentPoint, stopSymbol));
 			});
 			startEdit.on("graphic-move-stop", function(evt) {
+				console.log(evt);
+				startLocator.locationToAddress(evt.graphic.geometry);
 				mouseMapListener.remove();
 				if (task !== undefined) {
 					clearInterval(task);
@@ -114,6 +118,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 				routeParameters.stops.features.splice(stopIndex, 0, new Graphic(currentPoint, stopSymbol));
 			});
 			endEdit.on("graphic-move-stop", function(evt) {
+				endLocator.locationToAddress(evt.graphic.geometry);
 				mouseMapListener.remove();
 				if (task !== undefined) {
 					clearInterval(task);
@@ -130,7 +135,9 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			});
 			startLocator.on("location-to-address-complete", function(evt) {
 				if (evt.address.address) {
-					console.log(evt);
+					// move point according to reverse geocode
+					map.getLayer("graphicsLayer0").graphics[0].setGeometry(evt.address.location);
+					map.getLayer("graphicsLayer0").graphics[0].setAttributes({name : evt.address.address.Address + ", " + evt.address.address.City});
 					registry.byId("start").set("value", evt.address.address.Address + ", " + evt.address.address.City);
 				}
 			});
@@ -141,7 +148,9 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			});
 			endLocator.on("location-to-address-complete", function(evt) {
 				if (evt.address.address) {
-					console.log(evt);
+					// move point according to reverse geocode
+					map.getLayer("graphicsLayer0").graphics[1].setGeometry(evt.address.location);
+					map.getLayer("graphicsLayer0").graphics[1].setAttributes({name : evt.address.address.Address + ", " + evt.address.address.City});
 					registry.byId("end").set("value", evt.address.address.Address + ", " + evt.address.address.City);
 				}
 			});

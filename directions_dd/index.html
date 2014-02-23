@@ -3,7 +3,7 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
-		<title>Drag & Drop Directions</title>
+		<title>Drag &amp; Drop Directions</title>
 		<link rel="stylesheet" href="http://js.arcgis.com/3.8/js/dojo/dijit/themes/claro/claro.css">
 		<link rel="stylesheet" href="http://js.arcgis.com/3.8/js/esri/css/esri.css">
 		<link rel="stylesheet" href="http://js.arcgis.com/3.8/js/dgrid/css/dgrid.css">
@@ -49,12 +49,10 @@
 	<body class="claro">
 		<div data-dojo-type="dijit.layout.BorderContainer" data-dojo-props="design:'headline', gutters:false" style="width:100%;height:100%;">
 			<div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region:'right'" style="width:25%;">
-				<input type="text" id="start" data-dojo-type="dijit/form/TextBox" data-dojo-props="trim:true, propercase:true" class="stop" />
-				<br>
-				<br>
-				<input type="text" id="end" data-dojo-type="dijit/form/TextBox" data-dojo-props="trim:true, propercase:true" class="stop" />
-				<br>
-				<br>
+				<input type="text" id="start" data-dojo-type="dijit/form/TextBox" data-dojo-props="trim:true, propercase:true" class="stop"/>
+				<img src="http://static.arcgis.com/images/Symbols/AtoZ/greenA.png" />
+				<input type="text" id="end" data-dojo-type="dijit/form/TextBox" data-dojo-props="trim:true, propercase:true" class="stop"/>
+				<img src="http://static.arcgis.com/images/Symbols/AtoZ/redB.png" />
 				<div id="directionsDetail" style="clear:both;">
 					<div id="grid"></div>
 				</div>
