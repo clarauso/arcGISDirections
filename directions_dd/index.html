@@ -3,9 +3,10 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
-		<title>Directions Widget</title>
+		<title>Drag & Drop Directions</title>
 		<link rel="stylesheet" href="http://js.arcgis.com/3.8/js/dojo/dijit/themes/claro/claro.css">
 		<link rel="stylesheet" href="http://js.arcgis.com/3.8/js/esri/css/esri.css">
+		<link rel="stylesheet" href="http://js.arcgis.com/3.8/js/dgrid/css/dgrid.css">
 		<link rel="stylesheet" type="text/css" href="css/main.css">
 		<script type="text/javascript">
 			var package_path = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
@@ -49,8 +50,14 @@
 		<div data-dojo-type="dijit.layout.BorderContainer" data-dojo-props="design:'headline', gutters:false" style="width:100%;height:100%;">
 			<div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region:'right'" style="width:25%;">
 				<input type="text" id="start" data-dojo-type="dijit/form/TextBox" data-dojo-props="trim:true, propercase:true" class="stop" />
-				<br><br>
+				<br>
+				<br>
 				<input type="text" id="end" data-dojo-type="dijit/form/TextBox" data-dojo-props="trim:true, propercase:true" class="stop" />
+				<br>
+				<br>
+				<div id="directionsDetail" style="clear:both;">
+					<div id="grid"></div>
+				</div>
 			</div>
 			<div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region:'center'" id="map"></div>
 		</div>

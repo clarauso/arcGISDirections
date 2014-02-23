@@ -1,4 +1,4 @@
-define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "esri/toolbars/edit", "esri/geometry/Point", "application/utils/DirectionsMenu", "application/utils/DirectionsMenuItem", "application/utils/DirectionsEdit", "dojo/query", "dojo/keys", "dijit/registry", "application/utils/StopsUtils"], function(ready, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleMarkerSymbol, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, Edit, Point, DirectionsMenu, DirectionsMenuItem, DirectionsEdit, query, keys, registry, Stops) {
+define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "esri/toolbars/edit", "esri/geometry/Point", "application/utils/DirectionsMenu", "application/utils/DirectionsMenuItem", "application/utils/DirectionsEdit", "dojo/query", "dojo/keys", "dijit/registry", "application/utils/StopsUtils", "dgrid/Grid", "dojo/number", "dojo/dom-construct", "esri/lang"], function(ready, arrayUtils, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleMarkerSymbol, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, Edit, Point, DirectionsMenu, DirectionsMenuItem, DirectionsEdit, query, keys, registry, Stops, Grid, number, domConstruct, esriLang) {
 	return declare("", null, {
 		config : {},
 		constructor : function(config) {
@@ -15,12 +15,16 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 			var stopIndex;
 			var stopSymbol;
 			var currentPoint;
+			var grid;
 			// parameters
 			var routeParameters = new RouteParameters();
 			routeParameters.stops = new FeatureSet();
 			routeParameters.outSpatialReference = {
 				"wkid" : 102100
 			};
+			routeParameters.returnDirections = true;
+			routeParameters.directionsLanguage = "it_IT";
+			routeParameters.directionsLengthUnits = "esriKilometers";
 			// route line
 			var routeSymbol = new SimpleLineSymbol();
 			routeSymbol.setColor(new Color([0, 0, 255, 0.5]));
@@ -35,8 +39,30 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 					map.graphics.remove(toRemove);
 				toRemove = map.graphics.add(evt.result.routeResults[0].route.setSymbol(routeSymbol));
 				//map.setExtent(evt.result.routeResults[0].directions.mergedGeometry.getExtent(), true);
-				if (routeParameters.returnDirections === true)
-					console.log(evt.result.routeResults[0].directions.features);
+				if (routeParameters.returnDirections === true) {
+					if (grid)
+						grid.refresh();
+					var data = arrayUtils.map(evt.result.routeResults[0].directions.features, function(feature, index) {
+						return {
+							"detail" : feature.attributes.text,
+							"distance" : number.format(feature.attributes.length, {
+								places : 2
+							}),
+							"index" : index
+						};
+					});
+					grid = new Grid({
+						renderRow : function renderList(obj, options) {
+							var template = "<div class='detail'><div style='max-width:70%;float:left;'>${detail}</div><span style='float:right;' class='distance'>${distance} mi</span></div>";
+							return domConstruct.create("div", {
+								innerHTML : esriLang.substitute(obj, template)
+							});
+						},
+						showHeader : false
+					}, "grid");
+					grid.renderArray(data);
+					//console.log(evt.result.routeResults[0].directions.features);
+				}
 			});
 			routeTask.on("error", function(evt) {
 				console.log("routeTask error");
@@ -68,7 +94,7 @@ define(["dojo/ready", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color
 				routeParameters.returnDirections = true;
 				routeTask.solve(routeParameters);
 			});
-			
+
 			// end edit
 			var endEdit = new Edit(this.map);
 			endEdit.on("graphic-move-start", function(evt) {
