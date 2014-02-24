@@ -23,6 +23,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 				"wkid" : 102100
 			};
 			routeParameters.returnDirections = true;
+			routeParameters.returnStops = true;
 			routeParameters.directionsLanguage = "it_IT";
 			routeParameters.directionsLengthUnits = "esriKilometers";
 			// route line
@@ -39,8 +40,8 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 				if (toRemove !== undefined)
 					map.graphics.remove(toRemove);
 				toRemove = map.graphics.add(evt.result.routeResults[0].route.setSymbol(routeSymbol));
-				map.setExtent(evt.result.routeResults[0].directions.extent, true);
-				if (routeParameters.returnDirections === true) {
+				if (evt.result.routeResults[0].directions != null) {
+					map.setExtent(evt.result.routeResults[0].directions.extent, true);
 					if (grid)
 						grid.refresh();
 					var data = arrayUtils.map(evt.result.routeResults[0].directions.features, function(feature, index) {
@@ -65,7 +66,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 				}
 			});
 			routeTask.on("error", function(evt) {
-				//console.log("routeTask error");
+				console.log("routeTask error");
 				//console.log(evt);
 			});
 			// move start point
@@ -74,6 +75,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 				stopIndex = stops.graphics.indexOf(evt.graphic);
 				stopSymbol = evt.graphic.symbol;
 				routeParameters.returnDirections = false;
+				routeParameters.returnStops = false;
 				mouseMapListener = map.on("mouse-move", function(evt) {
 					currentPoint = evt.mapPoint;
 				});
@@ -96,6 +98,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 					task = undefined;
 				}
 				routeParameters.returnDirections = true;
+				routeParameters.returnStops = true;
 				routeTask.solve(routeParameters);
 			});
 			// move end point
@@ -104,6 +107,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 				stopIndex = stops.graphics.indexOf(evt.graphic);
 				stopSymbol = evt.graphic.symbol;
 				routeParameters.returnDirections = false;
+				routeParameters.returnStops = false;
 				mouseMapListener = map.on("mouse-move", function(evt) {
 					currentPoint = evt.mapPoint;
 				});
@@ -125,6 +129,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 					task = undefined;
 				}
 				routeParameters.returnDirections = true;
+				routeParameters.returnStops = true;
 				routeTask.solve(routeParameters);
 			});
 			var stopManager = new Stops();
@@ -137,8 +142,12 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 				if (evt.address.address) {
 					// move point according to reverse geocode
 					map.getLayer("graphicsLayer0").graphics[0].setGeometry(evt.address.location);
-					map.getLayer("graphicsLayer0").graphics[0].setAttributes({name : evt.address.address.Address + ", " + evt.address.address.City});
+					map.getLayer("graphicsLayer0").graphics[0].setAttributes({
+						name : evt.address.address.Address + ", " + evt.address.address.City
+					});
 					registry.byId("start").set("value", evt.address.address.Address + ", " + evt.address.address.City);
+					if (map.getLayer("graphicsLayer0").graphics[0] != null && map.getLayer("graphicsLayer0").graphics[1] != null)
+						routeTask.solve(routeParameters);
 				}
 			});
 			var endLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
@@ -148,10 +157,15 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			});
 			endLocator.on("location-to-address-complete", function(evt) {
 				if (evt.address.address) {
+					console.log("address");
 					// move point according to reverse geocode
 					map.getLayer("graphicsLayer0").graphics[1].setGeometry(evt.address.location);
-					map.getLayer("graphicsLayer0").graphics[1].setAttributes({name : evt.address.address.Address + ", " + evt.address.address.City});
+					map.getLayer("graphicsLayer0").graphics[1].setAttributes({
+						name : evt.address.address.Address + ", " + evt.address.address.City
+					});
 					registry.byId("end").set("value", evt.address.address.Address + ", " + evt.address.address.City);
+					if (map.getLayer("graphicsLayer0").graphics[0] != null && map.getLayer("graphicsLayer0").graphics[1] != null)
+						routeTask.solve(routeParameters);
 				}
 			});
 			// context menu
@@ -232,4 +246,4 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			}));
 		}
 	});
-});
+}); 

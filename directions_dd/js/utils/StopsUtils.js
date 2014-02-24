@@ -17,9 +17,6 @@ define(["dojo/_base/declare", "esri/toolbars/edit", "esri/graphic", "application
 			}
 			routeStops.splice(index, 1, stopGraphics.graphics[index]);
 
-			if (routeStops[0] != null && routeStops[1] != null)
-				task.solve(parameters);
-
 			if(edit != undefined)
 				edit.activate(Edit.MOVE, routeStops[index]);
 		}
