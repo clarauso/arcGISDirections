@@ -1,4 +1,4 @@
-define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "esri/toolbars/edit", "esri/geometry/Point", "application/utils/DirectionsMenu", "application/utils/DirectionsMenuItem", "application/utils/DirectionsEdit", "dojo/query", "dojo/keys", "dijit/registry", "application/utils/StopsUtils", "dgrid/Grid", "dojo/number", "dojo/dom-construct", "esri/lang"], function(ready, arrayUtils, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleMarkerSymbol, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, Edit, Point, DirectionsMenu, DirectionsMenuItem, DirectionsEdit, query, keys, registry, Stops, Grid, number, domConstruct, esriLang) {
+define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "esri/toolbars/edit", "esri/geometry/Point", "application/utils/DirectionsMenu", "application/utils/DirectionsMenuItem", "application/utils/DirectionsEdit", "dojo/query", "dojo/keys", "dijit/registry", "application/utils/StopsUtils", "dgrid/Grid", "dojo/number", "dojo/dom-construct", "esri/lang", "esri/units"], function(ready, arrayUtils, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleMarkerSymbol, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, Edit, Point, DirectionsMenu, DirectionsMenuItem, DirectionsEdit, query, keys, registry, Stops, Grid, number, domConstruct, esriLang, esriUnits) {
 	return declare("", null, {
 		config : {},
 		constructor : function(config) {
@@ -25,7 +25,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			routeParameters.returnDirections = true;
 			routeParameters.returnStops = true;
 			routeParameters.directionsLanguage = "it_IT";
-			routeParameters.directionsLengthUnits = "esriKilometers";
+			routeParameters.directionsLengthUnits = esriUnits.KILOMETERS;
 			// route line
 			var routeSymbol = new SimpleLineSymbol();
 			routeSymbol.setColor(new Color([0, 0, 255, 0.5]));
@@ -36,15 +36,15 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			// routing task
 			var routeTask = new RouteTask("http://route.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World");
 			routeTask.on("solve-complete", function(evt) {
-				console.log(evt);
+				var res = evt.result.routeResults[0];
 				if (toRemove !== undefined)
 					map.graphics.remove(toRemove);
-				toRemove = map.graphics.add(evt.result.routeResults[0].route.setSymbol(routeSymbol));
-				if (evt.result.routeResults[0].directions != null) {
-					map.setExtent(evt.result.routeResults[0].directions.extent, true);
+				toRemove = map.graphics.add(res.route.setSymbol(routeSymbol));
+				if (res.directions != null) {
+					map.setExtent(res.directions.extent, true);
 					if (grid)
 						grid.refresh();
-					var data = arrayUtils.map(evt.result.routeResults[0].directions.features, function(feature, index) {
+					var data = arrayUtils.map(res.directions.features, function(feature, index) {
 						return {
 							"detail" : feature.attributes.text,
 							"distance" : number.format(feature.attributes.length, {
@@ -63,11 +63,14 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 						showHeader : false
 					}, "grid");
 					grid.renderArray(data);
+					if(res.stops != null) {
+						map.getLayer("graphicsLayer0").graphics[0].geometry = res.stops[0].geometry;
+						map.getLayer("graphicsLayer0").graphics[1].geometry = res.stops[1].geometry;
+					}
 				}
 			});
 			routeTask.on("error", function(evt) {
 				console.log("routeTask error");
-				//console.log(evt);
 			});
 			// move start point
 			var startEdit = new Edit(this.map);
@@ -90,8 +93,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 				routeParameters.stops.features.splice(stopIndex, 0, new Graphic(currentPoint, stopSymbol));
 			});
 			startEdit.on("graphic-move-stop", function(evt) {
-				console.log(evt);
-				startLocator.locationToAddress(evt.graphic.geometry);
+				//startLocator.locationToAddress(evt.graphic.geometry);
 				mouseMapListener.remove();
 				if (task !== undefined) {
 					clearInterval(task);
@@ -122,7 +124,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 				routeParameters.stops.features.splice(stopIndex, 0, new Graphic(currentPoint, stopSymbol));
 			});
 			endEdit.on("graphic-move-stop", function(evt) {
-				endLocator.locationToAddress(evt.graphic.geometry);
+				//endLocator.locationToAddress(evt.graphic.geometry);
 				mouseMapListener.remove();
 				if (task !== undefined) {
 					clearInterval(task);
@@ -146,8 +148,9 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 						name : evt.address.address.Address + ", " + evt.address.address.City
 					});
 					registry.byId("start").set("value", evt.address.address.Address + ", " + evt.address.address.City);
-					if (map.getLayer("graphicsLayer0").graphics[0] != null && map.getLayer("graphicsLayer0").graphics[1] != null)
+					if (map.getLayer("graphicsLayer0").graphics[0] != null && map.getLayer("graphicsLayer0").graphics[1] != null) {
 						routeTask.solve(routeParameters);
+					}
 				}
 			});
 			var endLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
@@ -157,15 +160,15 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			});
 			endLocator.on("location-to-address-complete", function(evt) {
 				if (evt.address.address) {
-					console.log("address");
 					// move point according to reverse geocode
 					map.getLayer("graphicsLayer0").graphics[1].setGeometry(evt.address.location);
 					map.getLayer("graphicsLayer0").graphics[1].setAttributes({
 						name : evt.address.address.Address + ", " + evt.address.address.City
 					});
 					registry.byId("end").set("value", evt.address.address.Address + ", " + evt.address.address.City);
-					if (map.getLayer("graphicsLayer0").graphics[0] != null && map.getLayer("graphicsLayer0").graphics[1] != null)
+					if (map.getLayer("graphicsLayer0").graphics[0] != null && map.getLayer("graphicsLayer0").graphics[1] != null) {
 						routeTask.solve(routeParameters);
+					}
 				}
 			});
 			// context menu
