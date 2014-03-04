@@ -27,7 +27,7 @@ define(["dojo/_base/declare", "dijit/MenuItem", "application/utils/StopsUtils"],
 			this.task = task;
 		},
 		onClick : function() {
-			new Stops().addStop(this.menu.getMap(), this.parameters, this.index, this.menu.getCurrentPoint(), this.task, this.edit, this.locator);
+			new Stops().addStop(this.menu.getMap(), this.parameters, this.index, this.menu.getCurrentPoint(), this.task, this.edit, this.locator, true);
 		}
 	});
 

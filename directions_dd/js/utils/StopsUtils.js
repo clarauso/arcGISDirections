@@ -2,8 +2,9 @@ define(["dojo/_base/declare", "esri/toolbars/edit", "esri/graphic", "application
 	return declare("StopsUtils", null, {
 		constructor : function() {
 		},
-		addStop : function(map, parameters, index, point, task, edit, locator)  {
-			locator.locationToAddress(point);
+		addStop : function(map, parameters, index, point, task, edit, locator, reverse)  {
+			if(reverse)
+				locator.locationToAddress(point);
 			var stopGraphics = map.getLayer("graphicsLayer0");
 			var routeStops = parameters.stops.features;
 			if (stopGraphics.graphics.length == 0) {

@@ -138,7 +138,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			var startLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 			startLocator.outSpatialReference = map.spatialReference;
 			startLocator.on("address-to-locations-complete", function(evt) {
-				stopManager.addStop(map, routeParameters, 0, evt.addresses[0].location, task, startEdit);
+				stopManager.addStop(map, routeParameters, 0, evt.addresses[0].location, task, startEdit, false);
 			});
 			startLocator.on("location-to-address-complete", function(evt) {
 				if (evt.address.address) {
@@ -156,7 +156,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			var endLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 			endLocator.outSpatialReference = map.spatialReference;
 			endLocator.on("address-to-locations-complete", function(evt) {
-				stopManager.addStop(map, routeParameters, 1, evt.addresses[0].location, task, endEdit);
+				stopManager.addStop(map, routeParameters, 1, evt.addresses[0].location, task, endEdit, false);
 			});
 			endLocator.on("location-to-address-complete", function(evt) {
 				if (evt.address.address) {
