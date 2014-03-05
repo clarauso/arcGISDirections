@@ -1,4 +1,4 @@
-define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleMarkerSymbol", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "esri/toolbars/edit", "esri/geometry/Point", "application/utils/DirectionsMenu", "application/utils/DirectionsMenuItem", "application/utils/DirectionsEdit", "dojo/query", "dojo/keys", "dijit/registry", "application/utils/StopsUtils", "dgrid/Grid", "dojo/number", "dojo/dom-construct", "esri/lang", "esri/units", "dijit/form/Button"], function(ready, arrayUtils, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleMarkerSymbol, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, Edit, Point, DirectionsMenu, DirectionsMenuItem, DirectionsEdit, query, keys, registry, Stops, Grid, number, domConstruct, esriLang, esriUnits, Button) {
+define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "esri/toolbars/edit", "esri/geometry/Point", "application/utils/DirectionsMenu", "application/utils/DirectionsMenuItem", "application/utils/DirectionsEdit", "dojo/query", "dojo/keys", "dijit/registry", "application/utils/StopsUtils", "dgrid/Grid", "dojo/number", "dojo/dom-construct", "esri/lang", "esri/units", "dijit/form/Button", "dojo/promise/all"], function(ready, arrayUtils, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, Edit, Point, DirectionsMenu, DirectionsMenuItem, DirectionsEdit, query, keys, registry, Stops, Grid, number, domConstruct, esriLang, esriUnits, Button, all) {
 	return declare("", null, {
 		config : {},
 		constructor : function(config) {
@@ -201,32 +201,25 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			dirMenu.bindDomNode(map.container);
 			var routeButton = new Button({
 				onClick : function() {
-					console.log("routeButton");
+					all({
+						start : startLocator.addressToLocations({
+							address : {
+								"SingleLine" : registry.byId("start").get("value")
+							},
+							outFields : ["Loc_name"]
+						}),
+						end : endLocator.addressToLocations({
+							address : {
+								"SingleLine" : registry.byId("end").get("value")
+							},
+							outFields : ["Loc_name"]
+						})
+					}).then(function(results) {
+						console.log("fatto");
+						routeTask.solve(routeParameters);
+					});
 				}
 			}, "routeButton");
-			query("input[type='text']").on("keydown", function(evt) {
-				switch(evt.keyCode) {
-					case keys.ENTER:
-						evt.preventDefault();
-						var target = evt.originalTarget.id;
-						var s = registry.byId(target).get("value");
-						if (s != undefined || s != "") {
-							var address = {
-								"SingleLine" : s
-							};
-							var params = {
-								address : address,
-								outFields : ["Loc_name"]
-							};
-							if (target == "start")
-								startLocator.addressToLocations(params);
-							else if (target == "end")
-								endLocator.addressToLocations(params);
-						}
-						break;
-					default:
-				}
-			});
 		},
 		//create a map based on the input web map id
 		_createWebMap : function() {
