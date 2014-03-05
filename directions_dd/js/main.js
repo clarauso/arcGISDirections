@@ -139,6 +139,9 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			startLocator.outSpatialReference = map.spatialReference;
 			startLocator.on("address-to-locations-complete", function(evt) {
 				stopManager.addStop(map, routeParameters, 0, evt.addresses[0].location, task, startEdit, false);
+				map.getLayer("graphicsLayer0").graphics[0].setAttributes({
+					name : evt.addresses[0].address
+				});
 			});
 			startLocator.on("location-to-address-complete", function(evt) {
 				if (evt.address.address) {
@@ -157,6 +160,9 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			endLocator.outSpatialReference = map.spatialReference;
 			endLocator.on("address-to-locations-complete", function(evt) {
 				stopManager.addStop(map, routeParameters, 1, evt.addresses[0].location, task, endEdit, false);
+				map.getLayer("graphicsLayer0").graphics[1].setAttributes({
+					name : evt.addresses[0].address
+				});
 			});
 			endLocator.on("location-to-address-complete", function(evt) {
 				if (evt.address.address) {
