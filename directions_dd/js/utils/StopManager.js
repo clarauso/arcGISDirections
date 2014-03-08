@@ -2,19 +2,18 @@ define(["dojo/_base/declare", "esri/toolbars/edit", "esri/graphic", "application
 	return declare("StopManager", null, {
 		map : {},
 		parameters : {},
-		constructor : function(routeMap, routeParameters) {
+		locatorArray : {},
+		editArray : {},
+		constructor : function(routeMap, routeParameters, locatorArray, editArray) {
 			this.map = routeMap;
 			this.parameters = routeParameters;
+			this.locatorArray = locatorArray;
+			this.editArray = editArray;
 		},
-		getMap : function() {
-			return this.map;
-		},
-		getParameters : function() {
-			return this.parameters;
-		},
-		addStop : function(index, point, edit, locator, reverse)  {
+		addStop : function(index, point, reverse)  {
 			if(reverse)
-				locator.locationToAddress(point);
+				this.locatorArray[index].locationToAddress(point);
+			
 			var stopGraphics = this.map.getLayer("graphicsLayer0");
 			var routeStops = this.parameters.stops.features;
 			if (stopGraphics.graphics.length == 0) {
@@ -28,8 +27,8 @@ define(["dojo/_base/declare", "esri/toolbars/edit", "esri/graphic", "application
 			}
 			routeStops.splice(index, 1, stopGraphics.graphics[index]);
 
-			if(edit != undefined)
-				edit.activate(Edit.MOVE, routeStops[index]);
+			if(this.editArray[index] != undefined)
+				this.editArray[index].activate(Edit.MOVE, routeStops[index]);
 		}
 	});
 });

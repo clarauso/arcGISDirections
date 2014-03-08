@@ -134,11 +134,10 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 				routeParameters.returnStops = true;
 				routeTask.solve(routeParameters);
 			});
-			var stopManager = new StopManager(map, routeParameters);
 			var startLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 			startLocator.outSpatialReference = map.spatialReference;
 			startLocator.on("address-to-locations-complete", function(evt) {
-				stopManager.addStop(0, evt.addresses[0].location, startEdit, false);
+				stopManager.addStop(0, evt.addresses[0].location, false);
 				map.getLayer("graphicsLayer0").graphics[0].setAttributes({
 					name : evt.addresses[0].address
 				});
@@ -159,7 +158,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			var endLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 			endLocator.outSpatialReference = map.spatialReference;
 			endLocator.on("address-to-locations-complete", function(evt) {
-				stopManager.addStop(map, routeParameters, 1, evt.addresses[0].location, task, endEdit, false);
+				stopManager.addStop(1, evt.addresses[0].location, false);
 				map.getLayer("graphicsLayer0").graphics[1].setAttributes({
 					name : evt.addresses[0].address
 				});
@@ -177,6 +176,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 					}
 				}
 			});
+			var stopManager = new StopManager(map, routeParameters, [startLocator, endLocator], new Array(startEdit, endEdit));
 			// context menu
 			var dirMenu = new DirectionsMenu();
 			dirMenu.setMap(this.map);
@@ -184,9 +184,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			var startItem = new DirectionsMenuItem({
 				label : "Parti da qui"
 			});
-			startItem.setEdit(startEdit);
 			startItem.setIndex(0);
-			startItem.setLocator(startLocator);
 			startItem.setMenu(dirMenu);
 			startItem.setStopManager(stopManager);
 			dirMenu.addChild(startItem);
@@ -194,13 +192,11 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			var endItem = new DirectionsMenuItem({
 				label : "Arriva qui"
 			});
-			endItem.setEdit(endEdit);
 			endItem.setIndex(1);
-			endItem.setLocator(endLocator);
 			endItem.setMenu(dirMenu);
 			endItem.setStopManager(stopManager);
-			// activate context menu
 			dirMenu.addChild(endItem);
+			// activate context menu
 			dirMenu.startup();
 			dirMenu.bindDomNode(map.container);
 			var routeButton = new Button({
