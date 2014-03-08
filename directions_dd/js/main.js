@@ -1,6 +1,9 @@
 define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "esri/toolbars/edit", "esri/geometry/Point", "application/utils/DirectionsMenu", "application/utils/DirectionsMenuItem", "application/utils/DirectionsEdit", "dojo/query", "dojo/keys", "dijit/registry", "application/utils/StopManager", "dgrid/Grid", "dojo/number", "dojo/dom-construct", "esri/lang", "esri/units", "dijit/form/Button", "dojo/promise/all"], function(ready, arrayUtils, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, Edit, Point, DirectionsMenu, DirectionsMenuItem, DirectionsEdit, query, keys, registry, StopManager, Grid, number, domConstruct, esriLang, esriUnits, Button, all) {
 	return declare("", null, {
 		config : {},
+		mouseMapListener : {},
+		routeParameters : {},
+		task : {},
 		constructor : function(config) {
 			this.config = config;
 			ready(lang.hitch(this, function() {
@@ -8,24 +11,23 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			}));
 		},
 		_mapLoaded : function() {
-			var task;
 			var toRemove;
 			var map = this.map;
-			var mouseMapListener;
+			var mainThis = this;
 			var stopIndex;
 			var stopSymbol;
 			var currentPoint;
 			var grid;
 			// route parameters
-			var routeParameters = new RouteParameters();
-			routeParameters.stops = new FeatureSet();
-			routeParameters.outSpatialReference = {
+			this.routeParameters = new RouteParameters();
+			this.routeParameters.stops = new FeatureSet();
+			this.routeParameters.outSpatialReference = {
 				"wkid" : 102100
 			};
-			routeParameters.returnDirections = true;
-			routeParameters.returnStops = true;
-			routeParameters.directionsLanguage = "it_IT";
-			routeParameters.directionsLengthUnits = esriUnits.KILOMETERS;
+			this.routeParameters.returnDirections = true;
+			this.routeParameters.returnStops = true;
+			this.routeParameters.directionsLanguage = "it_IT";
+			this.routeParameters.directionsLengthUnits = esriUnits.KILOMETERS;
 			// route line
 			var routeSymbol = new SimpleLineSymbol();
 			routeSymbol.setColor(new Color([0, 0, 255, 0.5]));
@@ -108,8 +110,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			endEdit.on("graphic-move-start", function(evt) {
 				stopIndex = stops.graphics.indexOf(evt.graphic);
 				stopSymbol = evt.graphic.symbol;
-				routeParameters.returnDirections = false;
-				routeParameters.returnStops = false;
+				mainThis.dragParameters();
 				mouseMapListener = map.on("mouse-move", function(evt) {
 					currentPoint = evt.mapPoint;
 				});
@@ -130,8 +131,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 					clearInterval(task);
 					task = undefined;
 				}
-				routeParameters.returnDirections = true;
-				routeParameters.returnStops = true;
+				noDragParameters();
 				routeTask.solve(routeParameters);
 			});
 			var startLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
@@ -220,6 +220,14 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 					});
 				}
 			}, "routeButton");
+		},
+		_dragParameters : function() {
+			this.routeParameters.returnDirections = false;
+			this.routeParameters.returnStops = false;
+		},
+		_noDragParameters : function() {
+			this.routeParameters.returnDirections = true;
+			this.routeParameters.returnStops = true;
 		},
 		//create a map based on the input web map id
 		_createWebMap : function() {
