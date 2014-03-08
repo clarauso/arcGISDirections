@@ -18,5 +18,4 @@ define(["dojo/_base/declare", "dijit/MenuItem", "application/utils/StopManager"]
 			this.stopManager.addStop(this.index, this.menu.getCurrentPoint(), true);
 		}
 	});
-
 });
