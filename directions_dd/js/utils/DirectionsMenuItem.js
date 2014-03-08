@@ -5,14 +5,8 @@ define(["dojo/_base/declare", "dijit/MenuItem", "application/utils/StopManager"]
 		stopManager : {},
 		constructor : function() {
 		},
-		setEdit : function(edit) {
-			this.edit = edit;
-		},
 		setIndex : function(index) {
 			this.index = index;
-		},
-		setLocator : function(locator) {
-			this.locator = locator;
 		},
 		setMenu : function(menu) {
 			this.menu = menu;
