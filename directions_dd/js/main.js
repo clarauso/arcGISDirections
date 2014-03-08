@@ -1,4 +1,4 @@
-define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "esri/toolbars/edit", "esri/geometry/Point", "application/utils/DirectionsMenu", "application/utils/DirectionsMenuItem", "application/utils/DirectionsEdit", "dojo/query", "dojo/keys", "dijit/registry", "application/utils/StopsUtils", "dgrid/Grid", "dojo/number", "dojo/dom-construct", "esri/lang", "esri/units", "dijit/form/Button", "dojo/promise/all"], function(ready, arrayUtils, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, Edit, Point, DirectionsMenu, DirectionsMenuItem, DirectionsEdit, query, keys, registry, Stops, Grid, number, domConstruct, esriLang, esriUnits, Button, all) {
+define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "esri/toolbars/edit", "esri/geometry/Point", "application/utils/DirectionsMenu", "application/utils/DirectionsMenuItem", "application/utils/DirectionsEdit", "dojo/query", "dojo/keys", "dijit/registry", "application/utils/StopManager", "dgrid/Grid", "dojo/number", "dojo/dom-construct", "esri/lang", "esri/units", "dijit/form/Button", "dojo/promise/all"], function(ready, arrayUtils, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, Edit, Point, DirectionsMenu, DirectionsMenuItem, DirectionsEdit, query, keys, registry, StopManager, Grid, number, domConstruct, esriLang, esriUnits, Button, all) {
 	return declare("", null, {
 		config : {},
 		constructor : function(config) {
@@ -134,11 +134,11 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 				routeParameters.returnStops = true;
 				routeTask.solve(routeParameters);
 			});
-			var stopManager = new Stops();
+			var stopManager = new StopManager(map, routeParameters);
 			var startLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 			startLocator.outSpatialReference = map.spatialReference;
 			startLocator.on("address-to-locations-complete", function(evt) {
-				stopManager.addStop(map, routeParameters, 0, evt.addresses[0].location, task, startEdit, false);
+				stopManager.addStop(0, evt.addresses[0].location, startEdit, false);
 				map.getLayer("graphicsLayer0").graphics[0].setAttributes({
 					name : evt.addresses[0].address
 				});
@@ -188,8 +188,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			startItem.setIndex(0);
 			startItem.setLocator(startLocator);
 			startItem.setMenu(dirMenu);
-			startItem.setParameters(routeParameters);
-			startItem.setTask(routeTask);
+			startItem.setStopManager(stopManager);
 			dirMenu.addChild(startItem);
 			// end
 			var endItem = new DirectionsMenuItem({
@@ -199,8 +198,7 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			endItem.setIndex(1);
 			endItem.setLocator(endLocator);
 			endItem.setMenu(dirMenu);
-			endItem.setParameters(routeParameters);
-			endItem.setTask(routeTask);
+			endItem.setStopManager(stopManager);
 			// activate context menu
 			dirMenu.addChild(endItem);
 			dirMenu.startup();

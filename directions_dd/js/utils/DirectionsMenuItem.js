@@ -1,11 +1,10 @@
-define(["dojo/_base/declare", "dijit/MenuItem", "application/utils/StopsUtils"], function(declare, MenuItem, Stops) {
+define(["dojo/_base/declare", "dijit/MenuItem", "application/utils/StopManager"], function(declare, MenuItem, StopManager) {
 	return declare("DirectionsMenuItem", MenuItem, {
 		edit : {},
 		index : 0,
 		locator : {},
 		menu : {},
-		parameters : {},
-		task : {},
+		stopManager : {},
 		constructor : function() {
 		},
 		setEdit : function(edit) {
@@ -23,11 +22,11 @@ define(["dojo/_base/declare", "dijit/MenuItem", "application/utils/StopsUtils"],
 		setParameters : function(parameters) {
 			this.parameters = parameters;
 		},
-		setTask : function(task) {
-			this.task = task;
+		setStopManager : function(manager) {
+			this.stopManager = manager;
 		},
 		onClick : function() {
-			new Stops().addStop(this.menu.getMap(), this.parameters, this.index, this.menu.getCurrentPoint(), this.task, this.edit, this.locator, true);
+			this.stopManager.addStop(this.index, this.menu.getCurrentPoint(), this.edit, this.locator, true);
 		}
 	});
 

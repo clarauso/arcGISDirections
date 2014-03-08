@@ -1,12 +1,22 @@
 define(["dojo/_base/declare", "esri/toolbars/edit", "esri/graphic", "application/defaultPlacemarks"], function(declare, Edit, Graphic, Placemarks) {
-	return declare("StopsUtils", null, {
-		constructor : function() {
+	return declare("StopManager", null, {
+		map : {},
+		parameters : {},
+		constructor : function(routeMap, routeParameters) {
+			this.map = routeMap;
+			this.parameters = routeParameters;
 		},
-		addStop : function(map, parameters, index, point, task, edit, locator, reverse)  {
+		getMap : function() {
+			return this.map;
+		},
+		getParameters : function() {
+			return this.parameters;
+		},
+		addStop : function(index, point, edit, locator, reverse)  {
 			if(reverse)
 				locator.locationToAddress(point);
-			var stopGraphics = map.getLayer("graphicsLayer0");
-			var routeStops = parameters.stops.features;
+			var stopGraphics = this.map.getLayer("graphicsLayer0");
+			var routeStops = this.parameters.stops.features;
 			if (stopGraphics.graphics.length == 0) {
 				stopGraphics.add(new Graphic(null, Placemarks.start));
 				stopGraphics.add(new Graphic(null, Placemarks.end));
