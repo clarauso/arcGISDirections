@@ -1,9 +1,20 @@
-define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", "esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "esri/toolbars/edit", "esri/geometry/Point", "application/utils/DirectionsMenu", "application/utils/DirectionsMenuItem", "application/utils/DirectionsEdit", "dojo/query", "dojo/keys", "dijit/registry", "application/utils/StopManager", "dgrid/Grid", "dojo/number", "dojo/dom-construct", "esri/lang", "esri/units", "dijit/form/Button", "dojo/promise/all"], function(ready, arrayUtils, declare, lang, Color, arcgisUtils, IdentityManager, on, Locator, webMercatorUtils, GraphicsLayer, SimpleLineSymbol, Graphic, RouteTask, RouteParameters, FeatureSet, Edit, Point, DirectionsMenu, DirectionsMenuItem, DirectionsEdit, query, keys, registry, StopManager, Grid, number, domConstruct, esriLang, esriUnits, Button, all) {
+define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", 
+"esri/tasks/locator", "esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", 
+"esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "esri/geometry/Point", "application/utils/DirectionsMenu", "application/utils/DirectionsMenuItem", 
+"application/utils/DirectionsEdit", "dojo/query", "dojo/keys", "dijit/registry", "application/utils/StopManager", "dgrid/Grid", "dojo/number", "dojo/dom-construct", 
+"esri/lang", "esri/units", "dijit/form/Button", "dojo/promise/all"], 
+function(ready, arrayUtils, declare, lang, Color, arcgisUtils, IdentityManager, on,
+	Locator, webMercatorUtils, GraphicsLayer, SimpleLineSymbol, Graphic, RouteTask, 
+	RouteParameters, FeatureSet, Point, DirectionsMenu, DirectionsMenuItem, 
+	DirectionsEdit, query, keys, registry, StopManager, Grid, number, domConstruct,
+	esriLang, esriUnits, Button, all) {
 	return declare("", null, {
 		config : {},
 		mouseMapListener : {},
 		routeParameters : {},
-		task : {},
+		routeTask : {},
+		stops : {},
+		timerTask : {},
 		constructor : function(config) {
 			this.config = config;
 			ready(lang.hitch(this, function() {
@@ -11,13 +22,15 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			}));
 		},
 		_mapLoaded : function() {
+			var task;
 			var toRemove;
 			var map = this.map;
-			var mainThis = this;
+			var mouseMapListener;
 			var stopIndex;
 			var stopSymbol;
 			var currentPoint;
 			var grid;
+			this.timerTask = undefined;
 			// route parameters
 			this.routeParameters = new RouteParameters();
 			this.routeParameters.stops = new FeatureSet();
@@ -28,16 +41,18 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 			this.routeParameters.returnStops = true;
 			this.routeParameters.directionsLanguage = "it_IT";
 			this.routeParameters.directionsLengthUnits = esriUnits.KILOMETERS;
+			var routeParameters = this.routeParameters; // TODO remove
 			// route line
 			var routeSymbol = new SimpleLineSymbol();
 			routeSymbol.setColor(new Color([0, 0, 255, 0.5]));
 			routeSymbol.setWidth(5);
 			// stops
-			var stops = new GraphicsLayer();
-			this.map.addLayer(stops);
+			this.stops = new GraphicsLayer();
+			this.map.addLayer(this.stops);
+			var stops = this.stops;		// TODO remove
 			// routing task
-			var routeTask = new RouteTask("http://route.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World");
-			routeTask.on("solve-complete", function(evt) {
+			this.routeTask = new RouteTask("http://route.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World");
+			this.routeTask.on("solve-complete", function(evt) {
 				var res = evt.result.routeResults[0];
 				if (toRemove !== undefined)
 					map.graphics.remove(toRemove);
@@ -71,69 +86,10 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 					}
 				}
 			});
-			routeTask.on("error", function(evt) {
+			this.routeTask.on("error", function(evt) {
 				console.log("routeTask error");
 			});
-			// move start point
-			var startEdit = new Edit(this.map);
-			startEdit.on("graphic-move-start", function(evt) {
-				stopIndex = stops.graphics.indexOf(evt.graphic);
-				stopSymbol = evt.graphic.symbol;
-				routeParameters.returnDirections = false;
-				routeParameters.returnStops = false;
-				mouseMapListener = map.on("mouse-move", function(evt) {
-					currentPoint = evt.mapPoint;
-				});
-				if (task === undefined) {
-					task = setInterval(function() {
-						routeTask.solve(routeParameters);
-					}, 600);
-				}
-			});
-			startEdit.on("graphic-move", function(evt) {
-				routeParameters.stops.features.splice(stopIndex, 1);
-				routeParameters.stops.features.splice(stopIndex, 0, new Graphic(currentPoint, stopSymbol));
-			});
-			startEdit.on("graphic-move-stop", function(evt) {
-				//startLocator.locationToAddress(evt.graphic.geometry);
-				mouseMapListener.remove();
-				if (task !== undefined) {
-					clearInterval(task);
-					task = undefined;
-				}
-				routeParameters.returnDirections = true;
-				routeParameters.returnStops = true;
-				routeTask.solve(routeParameters);
-			});
-			// move end point
-			var endEdit = new Edit(this.map);
-			endEdit.on("graphic-move-start", function(evt) {
-				stopIndex = stops.graphics.indexOf(evt.graphic);
-				stopSymbol = evt.graphic.symbol;
-				mainThis.dragParameters();
-				mouseMapListener = map.on("mouse-move", function(evt) {
-					currentPoint = evt.mapPoint;
-				});
-				if (task === undefined) {
-					task = setInterval(function() {
-						routeTask.solve(routeParameters);
-					}, 600);
-				}
-			});
-			endEdit.on("graphic-move", function(evt) {
-				routeParameters.stops.features.splice(stopIndex, 1);
-				routeParameters.stops.features.splice(stopIndex, 0, new Graphic(currentPoint, stopSymbol));
-			});
-			endEdit.on("graphic-move-stop", function(evt) {
-				//endLocator.locationToAddress(evt.graphic.geometry);
-				mouseMapListener.remove();
-				if (task !== undefined) {
-					clearInterval(task);
-					task = undefined;
-				}
-				noDragParameters();
-				routeTask.solve(routeParameters);
-			});
+			var routeTask = this.routeTask;
 			var startLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 			startLocator.outSpatialReference = map.spatialReference;
 			startLocator.on("address-to-locations-complete", function(evt) {
@@ -150,7 +106,10 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 						name : evt.address.address.Address + ", " + evt.address.address.City
 					});
 					registry.byId("start").set("value", evt.address.address.Address + ", " + evt.address.address.City);
+					routeParameters.stops.features.splice(0, 1, map.getLayer("graphicsLayer0").graphics[0]);
 					if (map.getLayer("graphicsLayer0").graphics[0] != null && map.getLayer("graphicsLayer0").graphics[1] != null) {
+						routeParameters.returnDirections = true;
+						routeParameters.returnStops = true;
 						routeTask.solve(routeParameters);
 					}
 				}
@@ -171,11 +130,22 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 						name : evt.address.address.Address + ", " + evt.address.address.City
 					});
 					registry.byId("end").set("value", evt.address.address.Address + ", " + evt.address.address.City);
+					routeParameters.stops.features.splice(1, 1, map.getLayer("graphicsLayer0").graphics[1]);
 					if (map.getLayer("graphicsLayer0").graphics[0] != null && map.getLayer("graphicsLayer0").graphics[1] != null) {
+						routeParameters.returnDirections = true;
+						routeParameters.returnStops = true;
 						routeTask.solve(routeParameters);
 					}
 				}
 			});
+			// move start point
+			var startEdit = new DirectionsEdit(this.map);
+			startEdit.setMain(this);
+			startEdit.setLocator(startLocator);
+			// move end point
+			var endEdit = new DirectionsEdit(this.map);
+			endEdit.setMain(this);
+			endEdit.setLocator(endLocator);
 			var stopManager = new StopManager(map, routeParameters, [startLocator, endLocator], new Array(startEdit, endEdit));
 			// context menu
 			var dirMenu = new DirectionsMenu();
@@ -215,19 +185,10 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 							outFields : ["Loc_name"]
 						})
 					}).then(function(results) {
-						console.log("fatto");
 						routeTask.solve(routeParameters);
 					});
 				}
 			}, "routeButton");
-		},
-		_dragParameters : function() {
-			this.routeParameters.returnDirections = false;
-			this.routeParameters.returnStops = false;
-		},
-		_noDragParameters : function() {
-			this.routeParameters.returnDirections = true;
-			this.routeParameters.returnStops = true;
 		},
 		//create a map based on the input web map id
 		_createWebMap : function() {
