@@ -1,12 +1,10 @@
 define(["dojo/_base/declare", "esri/toolbars/edit", "esri/graphic", "application/defaultPlacemarks"], function(declare, Edit, Graphic, Placemarks) {
 	return declare("StopManager", null, {
-		map : {},
-		parameters : {},
-		locatorArray : {},
 		editArray : {},
-		constructor : function(routeMap, routeParameters, locatorArray, editArray) {
-			this.map = routeMap;
-			this.parameters = routeParameters;
+		locatorArray : {},
+		main : {},
+		constructor : function(main, locatorArray, editArray) {
+			this.main = main;
 			this.locatorArray = locatorArray;
 			this.editArray = editArray;
 		},
@@ -14,8 +12,8 @@ define(["dojo/_base/declare", "esri/toolbars/edit", "esri/graphic", "application
 			if(reverse)
 				this.locatorArray[index].locationToAddress(point);
 			
-			var stopGraphics = this.map.getLayer("graphicsLayer0");
-			var routeStops = this.parameters.stops.features;
+			var stopGraphics = this.main.stops;
+			var routeStops = this.main.routeParameters.stops.features;
 			if (stopGraphics.graphics.length == 0) {
 				stopGraphics.add(new Graphic(null, Placemarks.start));
 				stopGraphics.add(new Graphic(null, Placemarks.end));

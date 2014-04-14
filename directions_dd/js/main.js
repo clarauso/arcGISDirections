@@ -22,7 +22,6 @@ function(ready, arrayUtils, declare, lang, Color, arcgisUtils, IdentityManager, 
 			}));
 		},
 		_mapLoaded : function() {
-			var task;
 			var toRemove;
 			var map = this.map;
 			var mouseMapListener;
@@ -107,7 +106,7 @@ function(ready, arrayUtils, declare, lang, Color, arcgisUtils, IdentityManager, 
 			var endEdit = new DirectionsEdit(this.map);
 			endEdit.setMain(this);
 			endEdit.setLocator(endLocator);
-			var stopManager = new StopManager(map, routeParameters, [startLocator, endLocator], [startEdit, endEdit]);
+			var stopManager = new StopManager(this, [startLocator, endLocator], [startEdit, endEdit]);
 			// context menu with items
 			var dirMenu = new DirectionsMenu();
 			dirMenu.setMap(this.map);
