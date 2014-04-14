@@ -36,8 +36,7 @@ function(ready, arrayUtils, declare, lang, Color, arcgisUtils, on,
 			this.routeParameters.returnStops = true;
 			this.routeParameters.directionsLanguage = "it_IT";
 			this.routeParameters.directionsLengthUnits = esriUnits.KILOMETERS;
-			var routeParameters = this.routeParameters;
-			// TODO remove
+			var routeParameters = this.routeParameters;		// TODO remove
 			// route line
 			var routeSymbol = new SimpleLineSymbol();
 			routeSymbol.setColor(new Color([0, 0, 255, 0.5]));
