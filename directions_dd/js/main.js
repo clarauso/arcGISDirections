@@ -85,12 +85,11 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 				if (task === undefined) {
 					task = setInterval(function() {
 						routeTask.solve(routeParameters);
-					}, 600);
+					}, 100);
 				}
 			});
 			startEdit.on("graphic-move", function(evt) {
-				routeParameters.stops.features.splice(stopIndex, 1);
-				routeParameters.stops.features.splice(stopIndex, 0, new Graphic(currentPoint, stopSymbol));
+				routeParameters.stops.features.splice(stopIndex, 1, new Graphic(currentPoint, stopSymbol));
 			});
 			startEdit.on("graphic-move-stop", function(evt) {
 				startLocator.locationToAddress(evt.graphic.geometry);
@@ -113,12 +112,11 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 				if (task === undefined) {
 					task = setInterval(function() {
 						routeTask.solve(routeParameters);
-					}, 600);
+					}, 100);
 				}
 			});
 			endEdit.on("graphic-move", function(evt) {
-				routeParameters.stops.features.splice(stopIndex, 1);
-				routeParameters.stops.features.splice(stopIndex, 0, new Graphic(currentPoint, stopSymbol));
+				routeParameters.stops.features.splice(stopIndex, 1, new Graphic(currentPoint, stopSymbol));
 			});
 			endEdit.on("graphic-move-stop", function(evt) {
 				endLocator.locationToAddress(evt.graphic.geometry);
@@ -215,7 +213,6 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 							outFields : ["Loc_name"]
 						})
 					}).then(function(results) {
-						console.log("fatto");
 						routeTask.solve(routeParameters);
 					});
 				}
