@@ -9,6 +9,7 @@ function(ready, arrayUtils, declare, lang, Color, arcgisUtils, IdentityManager, 
 	DirectionsEdit, DirectionsLocator, query, keys, registry, StopManager, Grid, number, domConstruct,
 	esriLang, esriUnits, Button, all) {
 	return declare("", null, {
+		currentPoint : {},
 		config : {},
 		mouseMapListener : {},
 		routeParameters : {},
@@ -24,10 +25,6 @@ function(ready, arrayUtils, declare, lang, Color, arcgisUtils, IdentityManager, 
 		_mapLoaded : function() {
 			var toRemove;
 			var map = this.map;
-			var mouseMapListener;
-			var stopIndex;
-			var stopSymbol;
-			var currentPoint;
 			var grid;
 			this.timerTask = undefined;
 			// route parameters

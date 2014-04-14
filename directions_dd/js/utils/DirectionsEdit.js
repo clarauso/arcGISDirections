@@ -39,7 +39,7 @@ define(["dojo/_base/declare", "esri/graphic", "esri/toolbars/edit"], function(de
 				var main = this.main;
 				this.main.timerTask = setInterval(function() {
 					main.routeTask.solve(main.routeParameters);
-				}, 100);
+				}, 200);
 			}
 		},
 		_moveStop : function(evt) {
