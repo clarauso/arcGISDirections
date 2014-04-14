@@ -93,15 +93,12 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 				routeParameters.stops.features.splice(stopIndex, 0, new Graphic(currentPoint, stopSymbol));
 			});
 			startEdit.on("graphic-move-stop", function(evt) {
-				//startLocator.locationToAddress(evt.graphic.geometry);
+				startLocator.locationToAddress(evt.graphic.geometry);
 				mouseMapListener.remove();
 				if (task !== undefined) {
 					clearInterval(task);
 					task = undefined;
 				}
-				routeParameters.returnDirections = true;
-				routeParameters.returnStops = true;
-				routeTask.solve(routeParameters);
 			});
 			// move end point
 			var endEdit = new Edit(this.map);
@@ -124,15 +121,12 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 				routeParameters.stops.features.splice(stopIndex, 0, new Graphic(currentPoint, stopSymbol));
 			});
 			endEdit.on("graphic-move-stop", function(evt) {
-				//endLocator.locationToAddress(evt.graphic.geometry);
+				endLocator.locationToAddress(evt.graphic.geometry);
 				mouseMapListener.remove();
 				if (task !== undefined) {
 					clearInterval(task);
 					task = undefined;
 				}
-				routeParameters.returnDirections = true;
-				routeParameters.returnStops = true;
-				routeTask.solve(routeParameters);
 			});
 			var startLocator = new Locator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 			startLocator.outSpatialReference = map.spatialReference;
@@ -150,7 +144,10 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 						name : evt.address.address.Address + ", " + evt.address.address.City
 					});
 					registry.byId("start").set("value", evt.address.address.Address + ", " + evt.address.address.City);
+					routeParameters.stops.features.splice(0, 1, map.getLayer("graphicsLayer0").graphics[0]);
 					if (map.getLayer("graphicsLayer0").graphics[0] != null && map.getLayer("graphicsLayer0").graphics[1] != null) {
+						routeParameters.returnDirections = true;
+						routeParameters.returnStops = true;
 						routeTask.solve(routeParameters);
 					}
 				}
@@ -171,7 +168,10 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 						name : evt.address.address.Address + ", " + evt.address.address.City
 					});
 					registry.byId("end").set("value", evt.address.address.Address + ", " + evt.address.address.City);
+					routeParameters.stops.features.splice(1, 1, map.getLayer("graphicsLayer0").graphics[1]);
 					if (map.getLayer("graphicsLayer0").graphics[0] != null && map.getLayer("graphicsLayer0").graphics[1] != null) {
+						routeParameters.returnDirections = true;
+						routeParameters.returnStops = true;
 						routeTask.solve(routeParameters);
 					}
 				}
