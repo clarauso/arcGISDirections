@@ -1,13 +1,12 @@
-define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "esri/IdentityManager", "dojo/on", 
-"esri/geometry/webMercatorUtils", "esri/layers/GraphicsLayer", "esri/symbols/SimpleLineSymbol", "esri/graphic", "esri/tasks/RouteTask", 
-"esri/tasks/RouteParameters", "esri/tasks/FeatureSet", "esri/geometry/Point", "application/utils/DirectionsMenu", "application/utils/DirectionsMenuItem", 
-"application/utils/DirectionsEdit", "application/utils/DirectionsLocator", "dojo/query", "dojo/keys", "dijit/registry", "application/utils/StopManager", "dgrid/Grid", "dojo/number", "dojo/dom-construct", 
-"esri/lang", "esri/units", "dijit/form/Button", "dojo/promise/all"], 
-function(ready, arrayUtils, declare, lang, Color, arcgisUtils, IdentityManager, on,
-	webMercatorUtils, GraphicsLayer, SimpleLineSymbol, Graphic, RouteTask, 
-	RouteParameters, FeatureSet, Point, DirectionsMenu, DirectionsMenuItem, 
-	DirectionsEdit, DirectionsLocator, query, keys, registry, StopManager, Grid, number, domConstruct,
-	esriLang, esriUnits, Button, all) {
+define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "dojo/on", 
+"esri/layers/GraphicsLayer", "esri/symbols/SimpleLineSymbol", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", 
+"application/utils/DirectionsMenu", "application/utils/DirectionsMenuItem", "application/utils/DirectionsEdit", "application/utils/DirectionsLocator", 
+"dojo/query", "dijit/registry", "application/utils/StopManager", "dgrid/Grid", "dojo/number", "dojo/dom-construct", "esri/lang", "esri/units", "dijit/form/Button", 
+"dojo/promise/all"], 
+function(ready, arrayUtils, declare, lang, Color, arcgisUtils, on, 
+	GraphicsLayer, SimpleLineSymbol, RouteTask, RouteParameters, FeatureSet, 
+	DirectionsMenu, DirectionsMenuItem, DirectionsEdit, DirectionsLocator, 
+	query, registry, StopManager, Grid, number, domConstruct, esriLang, esriUnits, Button, all) {
 	return declare("", null, {
 		currentPoint : {},
 		config : {},
@@ -37,7 +36,8 @@ function(ready, arrayUtils, declare, lang, Color, arcgisUtils, IdentityManager, 
 			this.routeParameters.returnStops = true;
 			this.routeParameters.directionsLanguage = "it_IT";
 			this.routeParameters.directionsLengthUnits = esriUnits.KILOMETERS;
-			var routeParameters = this.routeParameters; // TODO remove
+			var routeParameters = this.routeParameters;
+			// TODO remove
 			// route line
 			var routeSymbol = new SimpleLineSymbol();
 			routeSymbol.setColor(new Color([0, 0, 255, 0.5]));
@@ -45,7 +45,8 @@ function(ready, arrayUtils, declare, lang, Color, arcgisUtils, IdentityManager, 
 			// stops
 			this.stops = new GraphicsLayer();
 			this.map.addLayer(this.stops);
-			var stops = this.stops;		// TODO remove
+			var stops = this.stops;
+			// TODO remove
 			// routing task
 			this.routeTask = new RouteTask("http://route.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World");
 			this.routeTask.on("solve-complete", function(evt) {
@@ -175,4 +176,4 @@ function(ready, arrayUtils, declare, lang, Color, arcgisUtils, IdentityManager, 
 			}));
 		}
 	});
-});
+}); 
