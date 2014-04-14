@@ -45,8 +45,6 @@ function(ready, arrayUtils, declare, lang, Color, arcgisUtils, on,
 			// stops
 			this.stops = new GraphicsLayer();
 			this.map.addLayer(this.stops);
-			var stops = this.stops;
-			// TODO remove
 			// routing task
 			this.routeTask = new RouteTask("http://route.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World");
 			this.routeTask.on("solve-complete", function(evt) {
@@ -89,11 +87,11 @@ function(ready, arrayUtils, declare, lang, Color, arcgisUtils, on,
 			var routeTask = this.routeTask;
 			// locators for geocoding
 			var startLocator = new DirectionsLocator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
-			startLocator.outSpatialReference = map.spatialReference;
+			startLocator.outSpatialReference = this.map.spatialReference;
 			startLocator.setIndex(0);
 			startLocator.setMain(this);
 			var endLocator = new DirectionsLocator("http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
-			endLocator.outSpatialReference = map.spatialReference;
+			endLocator.outSpatialReference = this.map.spatialReference;
 			endLocator.setIndex(1);
 			endLocator.setMain(this);
 			// move start point
@@ -124,7 +122,7 @@ function(ready, arrayUtils, declare, lang, Color, arcgisUtils, on,
 			dirMenu.addChild(endItem);
 			// activate context menu
 			dirMenu.startup();
-			dirMenu.bindDomNode(map.container);
+			dirMenu.bindDomNode(this.map.container);
 			// solve route button
 			var routeButton = new Button({
 				onClick : function() {
