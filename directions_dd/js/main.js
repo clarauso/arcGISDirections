@@ -1,10 +1,10 @@
-define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang", "dojo/_base/Color", "esri/arcgis/utils", "dojo/on", 
-"esri/layers/GraphicsLayer", "esri/symbols/SimpleLineSymbol", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", 
+define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang", "esri/arcgis/utils", "dojo/on", 
+"esri/layers/GraphicsLayer", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", 
 "application/utils/DirectionsMenu", "application/utils/DirectionsMenuItem", "application/utils/DirectionsEdit", "application/utils/DirectionsLocator", 
 "dojo/query", "dijit/registry", "application/utils/StopManager", "dgrid/Grid", "dojo/number", "dojo/dom-construct", "esri/lang", "esri/units", "dijit/form/Button", 
 "dojo/promise/all", "application/utils/Symbols"], 
-function(ready, arrayUtils, declare, lang, Color, arcgisUtils, on, 
-	GraphicsLayer, SimpleLineSymbol, RouteTask, RouteParameters, FeatureSet, 
+function(ready, arrayUtils, declare, lang, arcgisUtils, on, 
+	GraphicsLayer, RouteTask, RouteParameters, FeatureSet, 
 	DirectionsMenu, DirectionsMenuItem, DirectionsEdit, DirectionsLocator, 
 	query, registry, StopManager, Grid, number, domConstruct, esriLang, esriUnits, Button, all, Symbols) {
 	return declare("", null, {
