@@ -1,4 +1,4 @@
-define(["dojo/_base/declare", "esri/toolbars/edit", "esri/graphic", "application/defaultPlacemarks"], function(declare, Edit, Graphic, Placemarks) {
+define(["dojo/_base/declare", "esri/toolbars/edit", "esri/graphic", "application/utils/Symbols"], function(declare, Edit, Graphic, Symbols) {
 	return declare("StopManager", null, {
 		editArray : {},
 		locatorArray : {},
@@ -15,8 +15,8 @@ define(["dojo/_base/declare", "esri/toolbars/edit", "esri/graphic", "application
 			var stopGraphics = this.main.stops;
 			var routeStops = this.main.routeParameters.stops.features;
 			if (stopGraphics.graphics.length == 0) {
-				stopGraphics.add(new Graphic(null, Placemarks.start));
-				stopGraphics.add(new Graphic(null, Placemarks.end));
+				stopGraphics.add(new Graphic(null, Symbols.start));
+				stopGraphics.add(new Graphic(null, Symbols.end));
 			}
 			stopGraphics.graphics[index].setGeometry(point);
 			if (routeStops.length == 0) {

@@ -2,11 +2,11 @@ define(["dojo/ready", "dojo/_base/array", "dojo/_base/declare", "dojo/_base/lang
 "esri/layers/GraphicsLayer", "esri/symbols/SimpleLineSymbol", "esri/tasks/RouteTask", "esri/tasks/RouteParameters", "esri/tasks/FeatureSet", 
 "application/utils/DirectionsMenu", "application/utils/DirectionsMenuItem", "application/utils/DirectionsEdit", "application/utils/DirectionsLocator", 
 "dojo/query", "dijit/registry", "application/utils/StopManager", "dgrid/Grid", "dojo/number", "dojo/dom-construct", "esri/lang", "esri/units", "dijit/form/Button", 
-"dojo/promise/all"], 
+"dojo/promise/all", "application/utils/Symbols"], 
 function(ready, arrayUtils, declare, lang, Color, arcgisUtils, on, 
 	GraphicsLayer, SimpleLineSymbol, RouteTask, RouteParameters, FeatureSet, 
 	DirectionsMenu, DirectionsMenuItem, DirectionsEdit, DirectionsLocator, 
-	query, registry, StopManager, Grid, number, domConstruct, esriLang, esriUnits, Button, all) {
+	query, registry, StopManager, Grid, number, domConstruct, esriLang, esriUnits, Button, all, Symbols) {
 	return declare("", null, {
 		currentPoint : {},
 		config : {},
@@ -37,10 +37,6 @@ function(ready, arrayUtils, declare, lang, Color, arcgisUtils, on,
 			this.routeParameters.directionsLanguage = "it_IT";
 			this.routeParameters.directionsLengthUnits = esriUnits.KILOMETERS;
 			var routeParameters = this.routeParameters;		// TODO remove
-			// route line
-			var routeSymbol = new SimpleLineSymbol();
-			routeSymbol.setColor(new Color([0, 0, 255, 0.5]));
-			routeSymbol.setWidth(5);
 			// stops
 			this.stops = new GraphicsLayer();
 			this.map.addLayer(this.stops);
@@ -50,7 +46,7 @@ function(ready, arrayUtils, declare, lang, Color, arcgisUtils, on,
 				var res = evt.result.routeResults[0];
 				if (toRemove !== undefined)
 					map.graphics.remove(toRemove);
-				toRemove = map.graphics.add(res.route.setSymbol(routeSymbol));
+				toRemove = map.graphics.add(res.route.setSymbol(Symbols.route));
 				if (res.directions != null) {
 					map.setExtent(res.directions.extent, true);
 					if (grid)
