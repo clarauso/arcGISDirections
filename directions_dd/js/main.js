@@ -29,14 +29,12 @@ function(ready, arrayUtils, declare, lang, Color, arcgisUtils, on,
 			// route parameters
 			this.routeParameters = new RouteParameters();
 			this.routeParameters.stops = new FeatureSet();
-			this.routeParameters.outSpatialReference = {
-				"wkid" : 102100
-			};
+			this.routeParameters.outSpatialReference = this.map.spatialReference;
 			this.routeParameters.returnDirections = true;
 			this.routeParameters.returnStops = true;
 			this.routeParameters.directionsLanguage = "it_IT";
 			this.routeParameters.directionsLengthUnits = esriUnits.KILOMETERS;
-			var routeParameters = this.routeParameters;		// TODO remove
+			var routeParameters = this.routeParameters;
 			// stops
 			this.stops = new GraphicsLayer();
 			this.map.addLayer(this.stops);
@@ -89,11 +87,10 @@ function(ready, arrayUtils, declare, lang, Color, arcgisUtils, on,
 			endLocator.outSpatialReference = this.map.spatialReference;
 			endLocator.setIndex(1);
 			endLocator.setMain(this);
-			// move start point
+			// move start and end points
 			var startEdit = new DirectionsEdit(this.map);
 			startEdit.setMain(this);
 			startEdit.setLocator(startLocator);
-			// move end point
 			var endEdit = new DirectionsEdit(this.map);
 			endEdit.setMain(this);
 			endEdit.setLocator(endLocator);
