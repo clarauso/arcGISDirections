@@ -1,7 +1,7 @@
 # directions-dd-js
 
 This is an academic Esri ArcGIS project, based on application-boilerplate-js https://github.com/Esri/application-boilerplate-js.
-Drag & Drop Directions web application will be built using ArcGIS Javascript API.
+Drag & Drop Directions web application has been built using ArcGIS Javascript API.
 
 ## Licensing
 Copyright 2013 Esri
